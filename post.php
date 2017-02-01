@@ -6,7 +6,7 @@
  * Add post
  */
 
-require "include.php";
+require "includes/include.php";
 
 // basic security measures-- don't leave home without 'em!
 if (get_magic_quotes_gpc()) $_POST = array_map("stripslashes", $_POST);
@@ -16,7 +16,7 @@ $_COOKIE = array_map("htmlspecialquotes", $_COOKIE);
 // Generate the date
 $thisverysecond = time();
 
-$glob = file("globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
+$glob = file("includes/globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
 foreach ($glob as $tmp) {
     $tmp = trim($tmp);
     list ($name, $value) = explode("=", $tmp);
@@ -43,34 +43,34 @@ if ($_GET[shiichan] == "writenew") {
     if ($setting[posticons]) {
         $icons = "<input type='radio' name='icon' value='noicon.png' checked> No icon<br>";
         $i = 0;
-        $handle = opendir("posticons");
+        $handle = opendir("includes/posticons");
         while (false !== ($file = readdir($handle))) {
             if ($file != "." && $file != ".." && $file != "noicon.png") {
                 if ($i == 6) {
                     $icons .= "<br>";
                     $i = 0;
                 }
-                $icons .= "<input type='radio' name='icon' value='$file'><img src='posticons/$file'> ";
+                $icons .= "<input type='radio' name='icon' value='$file'><img src='/includes/posticons/$file'> ";
                 $i++;
             }
         }
         closedir($handle);
         $icons .= "<br>The following posticons are for <b>admin use only</b>:<br>";
         $i = 0;
-        $handle = opendir("capcodes/icons");
+        $handle = opendir("includes/capcodes/icons");
         while (false !== ($file = readdir($handle))) {
             if ($file != "." && $file != "..") {
                 if ($i == 6) {
                     $icons .= "<br>";
                     $i = 0;
                 }
-                $icons .= "<input type='radio' name='icon' value='../capcodes/icons/$file'><img src='capcodes/icons/$file'> ";
+                $icons .= "<input type='radio' name='icon' value='../capcodes/icons/$file'><img src='/includes/capcodes/icons/$file'> ";
                 $i++;
             }
         }
         closedir($handle);
     } else $icons = "<input type='hidden' name='icon' value='noicon.png'>Posticons are disabled.";
-    $html = file_get_contents("skin/$setting[skin]/addthread.txt");
+    $html = file_get_contents("includes/skin/$setting[skin]/addthread.txt");
     $html = str_replace("<%THREADNAME%>", $threadname, $html);
     if ($setting[encoding] == "sjis") $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important } </style>", $html);
     else $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'>", $html);
@@ -91,7 +91,7 @@ if ($_GET[shiichan] == "writenew") {
 if ($_GET[id]) {
     $thread = file("$_GET[bbs]/dat/$_GET[id].dat") or fancyDie("Couldn't open that thread");
     list ($threadname, $author, $lastposted) = explode("<=>", $thread[0]);
-    $html = file_get_contents("skin/$setting[skin]/addreply.txt");
+    $html = file_get_contents("includes/skin/$setting[skin]/addreply.txt");
     if ($_COOKIE[teeaccname]) $html = str_replace("<%NAMECOOKIE%>", "value='$_COOKIE[teeaccname]'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
     if (!is_writable("$_GET[bbs]/dat/$_GET[id].dat")) $html = str_replace("<%THREADSTOPPED%>", "<h3>This thread is threadstopped!!</h3>", $html); else $html = str_replace("<%THREADSTOPPED%>", "", $html);
     $html = str_replace("<%THREADNAME%>", $threadname, $html);
@@ -352,7 +352,7 @@ RebuildThreadList($_POST[bbs], $_POST[id], ($setting[neverbump] && !$isnewthread
 ?>
 <html><title>Success</title>
     <meta http-equiv='refresh' content='1;url=<?= $setting[urltoforum] ?><?= $_POST[bbs] ?>/'>
-<? readfile("skin/$setting[skin]/success.txt"); ?>
+<? readfile("includes/skin/$setting[skin]/success.txt"); ?>
     <br>
     <small><a href='<?= $setting[urltoforum] ?><?= $_POST[bbs] ?>/'>Click here to be forwarded manually</a></small>
     <hr>

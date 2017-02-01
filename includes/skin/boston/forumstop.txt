@@ -1,6 +1,6 @@
 <html><head><title><%FORUMNAME%></title>
 <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
-<link rel="stylesheet" href="<%FORUMURL%>skin/world4ch/style.css">
+<link rel="stylesheet" href="<%FORUMURL%>includes/skin/world4ch/style.css">
 </head>
 <base href="<%FORUMURL%>">
 <body>

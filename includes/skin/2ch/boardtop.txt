@@ -1,7 +1,7 @@
 <html><head><title><%BOARDNAME%></title>
 <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
 <%ENCODING%>
-<link rel="stylesheet" href="<%FORUMURL%>skin/2ch/style.css">
+<link rel="stylesheet" href="<%FORUMURL%>includes/skin/2ch/style.css">
 <script type="text/javascript">function quote(b,a) { var
 v=eval("document."+a+".mesg"); v.value+=">>"+b+"\n"; v.focus() }</script>
 </head>

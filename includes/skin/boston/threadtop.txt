@@ -1,12 +1,15 @@
 <!DOCTYPE HTML SYSTEM "http://www.w3.org/TR/ REC-html40/strict.dtd">
 <html><head><title><%FORUMNAME%> - <%THREADNAME%></title>
 <%ENCODING%>
-<link rel="stylesheet" href="<%FORUMURL%>skin/something/style.css">
+<link rel="stylesheet" href="<%FORUMURL%>includes/skin/boston/style.css">
 <script type="text/javascript">function quote(b,a) { var
 v=eval("document."+a+".mesg"); v.value+=">>"+b+"\n"; v.focus() }</script>
 </head>
 <base href="<%FORUMURL%>">
-<body><%PAGES%>
-<b><%THREADICON%> <a href="."><%FORUMNAME%></a> &gt; <a href="<%BOARDURL%>"><%BOARDNAME%></a> &gt; <%THREADNAME%></b>
+<body><h1><a href="."><%FORUMNAME%></a></h1>
+<h2><a href="<%BOARDURL%>"><%BOARDNAME%></a></h2>
+<h3><%THREADNAME%> <%THREADICON%></h4>
+<%PAGES%>
+
 <%STARTFORM%>
-<table><tr><th width="175">Author</th><th>Post</th></tr>
+<table>

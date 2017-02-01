@@ -1,8 +1,8 @@
 <?php
 
-require "include.php";
+require "includes/include.php";
 
-if ($_SERVER[REQUEST_METHOD] != 'GET') fancyDie('I POSTed your mom in the ass last night.');
+if ($_SERVER['REQUEST_METHOD'] != 'GET') fancyDie('I POSTed your mom in the ass last night.');
 
 if (isset($_GET['b']) && isset($_GET['t'])) {
     $request = 'read.php/' . (isset($_GET['b']) ? $_GET['b'] : '') . '/' . (isset($_GET['t']) ? $_GET['t'] : '') . '/' . (isset($_GET['p']) ? $_GET['p'] : '');
@@ -14,7 +14,7 @@ if (isset($_GET['b']) && isset($_GET['t'])) {
 }
 
 // settings file
-$glob = file("globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
+$glob = file("includes/globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
 foreach ($glob as $tmp) {
     $tmp = trim($tmp);
     list ($name, $value) = explode("=", $tmp);

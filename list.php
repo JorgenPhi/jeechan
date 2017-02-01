@@ -1,13 +1,13 @@
 <?php
 function icons($i, $threadicon) {
     global $setting;
-    if ($setting[posticons]) return "<img src='posticons/$threadicon'>";
+    if ($setting[posticons]) return "<img src='includes/posticons/$threadicon'>";
     return $i + 1;
 }
 
 if (!$_GET[bbs]) die("Specify a BBS, please.");
 $_GET[bbs] = htmlspecialchars($_GET[bbs]);
-$glob = file("globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
+$glob = file("includes/globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
 foreach ($glob as $tmp) {
     $tmp = trim($tmp);
     list ($name, $value) = explode("=", $tmp);
@@ -19,7 +19,7 @@ if ($local) foreach ($local as $tmp) {
     list ($name, $value) = explode("=", $tmp);
     $setting[$name] = $value;
 }
-$top = file_get_contents("skin/$setting[skin]/boardtop.txt");
+$top = file_get_contents("includes/skin/$setting[skin]/boardtop.txt");
 $top = str_replace("<%POST%>", "#", $top);
 $top = str_replace("<%FORUMURL%>", $setting[urltoforum], $top);
 $top = str_replace("<%BOARDURL%>", $bbs, $top);

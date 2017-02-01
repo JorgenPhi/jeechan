@@ -1,5 +1,5 @@
 <html><head><title><%FORUMNAME%> - <%THREADNAME%> (Add Reply)</title>
-<link rel="stylesheet" href="<%FORUMURL%>skin/boston/style.css">
+<link rel="stylesheet" href="<%FORUMURL%>includes/skin/boston/style.css">
 <script type="text/javascript">function quote(b,a) { var
 v=eval("document."+a+".mesg"); v.value+=">>"+b+"\n"; v.focus() }</script>
 </head>

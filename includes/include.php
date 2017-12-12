@@ -6,12 +6,13 @@
 * Basic includes
 */
 require 'includes/settings.php';
-require 'includes/passwordcompat.php';
-require 'includes/abbc/abbc.lib.php';
+require 'includes/lib/passwordcompat.php';
+require 'includes/lib/abbc/abbc.lib.php';
 
  // ABBC BBCode processor.
 // current version (int)
 
+define("TEEVERSION", 6900);
 $teeversion = 6900;
 
 if (!defined('PDO::ATTR_DRIVER_NAME')) {
@@ -170,12 +171,11 @@ function updateAccountCapcode($username, $capcode) {
 
 function addAccount($username, $password, $level) {
     global $tee_db, $myaccount;
-    $stmt = $tee_db->prepare("INSERT INTO accounts(username,password,loginkey,addedby,added,level) VALUES(:username,:password,:loginkey,:addedby,:added,:level)");
+    $stmt = $tee_db->prepare("INSERT INTO accounts(username,password,loginkey,addedby,level) VALUES(:username,:password,:loginkey,:addedby,:level)");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->bindValue(':password', teeHashPassword($password) , PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', newLoginKey() , PDO::PARAM_STR);
     $stmt->bindValue(':addedby', (is_array($myaccount) ? intval($myaccount['id']) : 0) , PDO::PARAM_INT);
-    $stmt->bindValue(':added', time() , PDO::PARAM_INT);
     $stmt->bindValue(':level', intval($level) , PDO::PARAM_INT);
     $stmt->execute();
 }
@@ -209,6 +209,20 @@ function deleteAccountByUsername($username) {
     $stmt = $tee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
+}
+
+/* ADMIN FUNCTIONS */
+
+function doesHavePermisison($userLevel, $reuqiredLevel) {
+    if ($userLevel < $reuqiredLevel) fancyDie("You don't have permission for that.");
+}
+
+function printSuccess($message) { ?>
+    <link rel="stylesheet" href="admin.css"><h1>Success</h1>
+    <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+    <p><?php echo $message ?></p>
+    <a href="admin.php">Back to Admin Panel</a>
+    <?php
 }
 
 function icons($i, $threadicon) {

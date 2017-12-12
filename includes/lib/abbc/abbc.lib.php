@@ -1,4 +1,4 @@
-<?
+<?php
 
 // AdvancedBBCode 1.2
 // http://software.unclassified.de/abbc
@@ -30,7 +30,7 @@ if (!defined('ABBC_LIB')) {
 // internal version number, do not change this
     $abbc_version = "1.2-20031015";
 
-    include('includes/abbc/abbc.cfg.php');
+    include('includes/lib/abbc/abbc.cfg.php');
 
 // Initialize some variables for a faster processing at a later time
 //

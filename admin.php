@@ -8,6 +8,8 @@
 
 require "includes/include.php";
 
+var_dump($_COOKIE);
+
 // Login screen
 function login($why) {
     $mesg = "";
@@ -76,7 +78,7 @@ function login($why) {
             </tr>
         </table>
     </form>
-    <?php exit;
+    <?php die();
 }
 
 // Check for login submission or stored session key
@@ -108,79 +110,98 @@ if (isset($_POST['teeaccname'])) {
 ################################################################################
 // Okay, are we changing something?
 if (get_magic_quotes_gpc()) $_POST = array_map("stripslashes", $_POST);
-switch ($_POST['action']) {
+switch (@$_POST['action']) {
     case "newadmin":
 // making a new account
-        if ($mylevel < 9000) fancyDie("You don't have permission for that.");
-        if (!$_POST['password']) fancyDie("Blank password == a no-no.");
-        if (!is_numeric($_POST['level'])) fancyDie("{$_POST['level']} isn't a number.");
-        if ($_POST['level'] > 9999) fancyDie("9999 is the highest it goes. Dragonball Z power levels are not allowed.");
-        if ($mylevel < 9999 && $_POST['level'] > 9000) fancyDie("No, your elite account-making abilities will not let you make yourself the sysop.");
-        if ($_POST['password'] != $_POST['pass2']) fancyDie("Passwords didn't match");
+        doesHavePermisison($mylevel, 9000);
+        
+        // Verify information
+        if (!$_POST['password']) {
+            fancyDie("Password cannot be blank.");
+        } 
+        if (!is_numeric($_POST['level'])) {
+            fancyDie("{$_POST['level']} isn't a number.");
+        }
+        if ($_POST['level'] > 9999) {
+            fancyDie("Maximum level is 9999.");
+        }
+        if ($mylevel < 9999 && $_POST['level'] > 9000) {
+            fancyDie("You cannot upgrade someone higher than yourself.");
+        }
+        if ($_POST['password'] != $_POST['pass2']) {
+            fancyDie("Passwords didn't match");
+        }
 
+        // Check for existing
         $existing_account = accountByUsername($_POST['addname']);
-        if (is_array($existing_account)) fancyDie("There's already an admin by that name.");
+        if (is_array($existing_account)) {
+            fancyDie("There's already an account with that username.");
+        }
 
+        // We made it here. We should be good.
         addAccount($_POST['addname'], $_POST['password'], $_POST['level']);
 
-        ?>
-        <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-        The user <?= $_POST['addname'] ?> was successfully added with the level <?= $_POST['level'] ?>.<p>
-        <a
-            href="admin.php">Back to Admin Panel</a>
-        <?php exit;
+        printSuccess("The user {$_POST['addname']} was successfully added with the level {$_POST['level']}.");
+        die();
     case "chgadmin":
 // changing admin userlevel
-        if ($mylevel < 9000) fancyDie("You don't have permission for that.");
-        if (!is_numeric($_POST['level'])) fancyDie("{$_POST['level']} isn't a number.");
-        if ($_POST['level'] > 9999) fancyDie("9999 is the highest it goes. Dragonball Z power levels are not allowed.");
-        if ($mylevel < 9999 && $_POST['level'] > 9000) fancyDie("Nice try, Mr. Power Trip. (Can't empower a user to higher than level 9000.)");
-// scan file
+        doesHavePermisison($mylevel, 9000);
+        if (!is_numeric($_POST['level'])) {
+            fancyDie("{$_POST['level']} isn't a number.");
+        }
+        if ($_POST['level'] > 9999) {
+            fancyDie("Maximum level is 9999.");
+        }
+        if ($mylevel < 9999 && $_POST['level'] > 9000) {
+            fancyDie("You cannot upgrade someone higher than yourself.");
+        }
 
         $change_account = accountByUsername($_POST['addname']);
-        if (!is_array($change_account)) fancyDie("Couldn't find an admin by that name.");
+        if (!is_array($change_account)) {
+            fancyDie("Couldn't find an account by that name.");
+        }
 
-        if ($mylevel < 9999 && intval($change_account['level']) > 9000)
-            fancyDie("You don't have permission for that.");
-
-// rewrite file
         updateAccountLevel($change_account['username'], $_POST['level']);
-        ?>
-        <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-        The user <?= $_POST['addname'] ?>'s level was successfully changed to <?= $_POST['level'] ?>.<p>
-        <a
-            href="admin.php">Back to Admin Panel</a>
-        <?php exit;
+        printSuccess("The user {$_POST['addname']}'s level was successfully changed to {$_POST['level']}.");
+        die();
     case "pleasechangemypasswordthankyou":
 // changing your password
-        if ($mylevel < 1) fancyDie("You don't have permission for that.");
-        if (!$_POST['p1']) fancyDie("Blank password == a no-no.");
-        if (isset($_POST['teeaccpass'])) fancyDie("You didn't enter your current password.");
-        if (!password_verify($_POST['teeaccpass'], $myaccount['password'])) fancyDie("You didn't enter your current password correctly.");
-        if ($_POST['p1'] != $_POST['p2']) fancyDie("Passwords didn't match");
-        if (!is_array($myaccount)) fancyDie("You don't seem to exist.");
+        doesHavePermisison($mylevel, 1);
+        if (!$_POST['p1']) {
+            fancyDie("Password cannot be blank.");
+        }
+        if (!isset($_POST['teeaccpasschk']) || !password_verify($_POST['teeaccpasschk'], $myaccount['password'])) {
+            fancyDie("You didn't enter your current password.");
+        }
+        if ($_POST['p1'] != $_POST['p2']) {
+            fancyDie("Passwords didn't match");
+        }
+        if (!is_array($myaccount)) {
+            fancyDie("You were not logged in.");
+        }
 
         updateAccountPassword($myaccount['username'], $_POST['p1']);
         login(4);
+        die();
     case "deladmin":
 // removing an admin entirely
-        if ($mylevel < 9500) fancyDie("You don't have permission for that.");
-        if (!$_POST['confirm']) fancyDie("You didn't confirm deletion. (Sorry, it's a safety catch.)");
+        doesHavePermisison($mylevel, 9500);
+        if (!$_POST['confirm']) {
+            fancyDie("You didn't confirm deletion. (Sorry, it's a safety catch.)");
+        }
 
         $delete_account = accountByUsername($_POST['addname']);
-        if (!is_array($delete_account)) fancyDie("Couldn't find an admin by that name.");
+        if (!is_array($delete_account)) {
+            fancyDie("Couldn't find an admin by that name.");
+        }
 
-        if ($mylevel < 9999 && intval($delete_account['level']) > 9000) fancyDie("You don't have permission for that.");
+        if ($mylevel < 9999 && intval($delete_account['level']) > 9000) {
+            fancyDie("You don't have permission for that.");
+        }
 
         deleteAccountByUsername($_POST['addname']);
-        ?>
-        <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-        >The user <?= $_POST['addname'] ?>'s level was successfully deleted from the database.<p><a
-        href="admin.php">Back to Admin Panel</a>
-        <?php exit;
+        printSuccess("The user {$_POST['addname']} was successfully deleted from the database.");
+        die();
     case "modifymycapcodebecauseilikecapcodes":
 // Modify capcode
         if ($mylevel < 10) fancyDie("You don't have permission for that.");
@@ -435,7 +456,7 @@ EOF;
 
 ################################################################################
 // Okay, we're printing out some stuff.
-switch ($_GET['task']) {
+switch (@$_GET['task']) {
     default: // Admin panel
         ?>
             <link rel="stylesheet" href="admin.css"><h1>Registered User Options Panel</h1>
@@ -624,7 +645,7 @@ switch ($_GET['task']) {
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a><p>
         <form action='admin.php' method='POST'><h2>Current Password</h2>
-            For security: <input type="password" name="teeaccpass"><br>
+            For security: <input type="password" name="teeaccpasschk"><br>
 
             <h2>New Password</h2>
             <input type="hidden" name="action" value="pleasechangemypasswordthankyou">New:

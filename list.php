@@ -7,12 +7,7 @@ function icons($i, $threadicon) {
 
 if (!$_GET[bbs]) die("Specify a BBS, please.");
 $_GET[bbs] = htmlspecialchars($_GET[bbs]);
-$glob = file("includes/globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
-foreach ($glob as $tmp) {
-    $tmp = trim($tmp);
-    list ($name, $value) = explode("=", $tmp);
-    $setting[$name] = $value;
-}
+$setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
 $local = file("$_GET[bbs]/localsettings.txt");
 if ($local) foreach ($local as $tmp) {
     $tmp = trim($tmp);

@@ -14,12 +14,7 @@ if (isset($_GET['b']) && isset($_GET['t'])) {
 }
 
 // settings file
-$glob = file("includes/globalsettings.txt") or fancyDie("Eh? Couldn't fetch the global settings file?!");
-foreach ($glob as $tmp) {
-    $tmp = trim($tmp);
-    list ($name, $value) = explode("=", $tmp);
-    $setting[$name] = $value;
-}
+$setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
 
 if ($request != '') {
     $pairs = explode('/', $request);

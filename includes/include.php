@@ -69,6 +69,22 @@ function fancyDie($m) {
     exit;
 }
 
+function getGlobalSettings() {
+    global $tee_db;
+    $stmt = $tee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        $row = json_decode($row["value"], true);
+        if($row == null) {
+            return false; // Invalid JSON
+        }
+        return $row;
+    }
+
+    return false; // No global settings
+}
+
 function linkToThread($board, $thread, $posts = '') {
     if (TEE_PRETTYURLS) {
         return 'read.php/' . $board . '/' . $thread . '/' . $posts;

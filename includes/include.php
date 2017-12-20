@@ -85,6 +85,22 @@ function getGlobalSettings() {
     return false; // No global settings
 }
 
+function setGlobalSettings($settings) {
+    global $tee_db;
+    $settings = json_encode($settings);
+    if(!getGlobalSettings()) {
+        // Create the key
+        $stmt = $tee_db->prepare("INSERT INTO settings(name,value) VALUES('_globalsettings',:settings)");
+        $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
+        $stmt->execute();
+    } else {
+        // Update
+        $stmt = $tee_db->prepare("UPDATE settings SET value=:settings WHERE name='_globalsettings'");
+        $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
+        $stmt->execute();
+    }
+}
+
 function linkToThread($board, $thread, $posts = '') {
     if (TEE_PRETTYURLS) {
         return 'read.php/' . $board . '/' . $thread . '/' . $posts;

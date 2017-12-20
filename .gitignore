@@ -3,7 +3,6 @@ nogit/
 
 # settings
 includes/settings.php
-includes/globalsettings.txt
 
 # home page
 index.html
@@ -14,4 +13,3 @@ index.html
 /*/localsettings.txt
 /*/subject.txt
 /*/index.html
-phpmyadmin

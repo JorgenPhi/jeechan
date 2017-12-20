@@ -245,7 +245,7 @@ if(isset($_POST['action'])) {
                 "additionalthreads" => $_POST['additionalthreads'],
                 "posticons" => isset($_POST['posticons']) ? $_POST['posticons'] : null
             );
-            var_dump(json_encode($settings));
+            setGlobalSettings($settings);
 
             printSuccess("Settings saved successfully.");
             die();

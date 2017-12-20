@@ -224,7 +224,7 @@ if(isset($_POST['action'])) {
             printSuccess("{$_POST['user']}'s capcode is now <b>{$_POST['cap']}</b>");
             die();
         case "savesettings":
-            if ($mylevel < 7000) fancyDie("You don't have permission for that.");
+            doesHavePermisison($mylevel, 7000);
 
             $settings = array(
                 "forumname" => $_POST['forumname'],
@@ -249,68 +249,86 @@ if(isset($_POST['action'])) {
 
             printSuccess("Settings saved successfully.");
             die();
-        case "writehead";
-            if ($mylevel < 4900) fancyDie("You don't have permission for that.");
-            if (!$_POST['bbs']) fancyDie("no bbs?!");
-            $fp = fopen("{$_POST['bbs']}/head.txt", "w") or fancyDie("Couldn't open the file");
-            fwrite($fp, $_POST['file']);
-            fclose($fp);
-            ?>
-            <link rel="stylesheet"
-                  href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            Header file was written succesfully.<p><a
-            href="admin.php">Back
-            to Admin Panel</a>
-            <?php exit;
         case "addmohel":
-            if ($mylevel < 6000) fancyDie("You don't have permission for that.");
+            doesHavePermisison($mylevel, 6000);
+            if (!$_POST['mohel']) {
+                fancyDie("no mohel?!");
+            }
+
             addMohel($_POST['mohel']);
 
-            ?>
-            <link rel="stylesheet"
-                  href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            That tripcode circumcision was added successfully.<p><a
-            href="admin.php">Back to Admin Panel</a>
-            <?php exit;
+            printSuccess("Tripcode {$_POST['mohel']} was added banned successfully.");
+            die();
         case "unmohel":
     // delete a mohel from the db
             doesHavePermisison($mylevel, 6000);
-            if (!$_POST['id']) fancyDie("no id?");
+            if (!$_POST['id']) {
+                fancyDie("no id?");
+            }
+
             deleteMohel($_POST['id']);
+
             printSuccess("That mohel was successfully deleted from the database.");
             die();
+        case "enactban":
+            doesHavePermisison($mylevel, 3000);
+            if (!$_POST['ip']) {
+                fancyDie("no ip to ban");
+            }
+
+            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['teeaccname']);
+
+            if ($_POST['message']) { // TODO
+                if (!is_numeric($_POST['id'])) fancyDie("no post?");
+                $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
+                list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
+                $thread[$_POST['id']] = "$name<>$date<>$trip<>$message<br><br><b style='color:red'>(USER WAS BANNED FOR THIS POST)</b><>$id<>$ip";
+                $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
+                foreach ($thread as $line) {
+                    fputs($k, $line);
+                }
+                fclose($k);
+            }
+
+            $reportMessage = "{$_POST['ip']} banned successfully.";
+            if ($_POST['message']) $reportMessage .= "</br>Ban message placed on post.";
+            $reportMessage .= "<a href='admin.php?task=rebuild&bbs={$_POST['bbs']}'>Rewrite index.html</a>";
+            printSuccess($reportMessage);
+            die();
+        case "unban":
+            doesHavePermisison($mylevel, 3000);
+            if (!$_POST['id']) {
+                fancyDie("no id?");
+            }
+            deleteBan($_POST['id']);
+
+            printSuccess("Unbanned successfully.");
         case "newb":
-            if ($mylevel < 8000) fancyDie("You don't have clearance for that.");
-            if (!$_POST['boardname']) fancyDie("Every board deserves a directory.");
-            if (!$_POST['namename']) fancyDie("Every board deserves a name.");
-            if (is_dir($_POST['boardname'])) fancyDie("That name is already in use.");
+            doesHavePermisison($mylevel, 8000);
+            if (!$_POST['boardname']) {
+                fancyDie("Every board deserves a directory.");
+            }
+            if (!$_POST['namename']) {
+                fancyDie("Every board deserves a name.");
+            }
+            if (is_dir($_POST['boardname'])) {
+                fancyDie("That name is already in use.");
+            }
+
             mkdir($_POST['boardname']);
-            mkdir($_POST['boardname'] . "/dat");
+            mkdir($_POST['boardname'] . "/dat"); // TODO
             touch($_POST['boardname'] . "/subject.txt");
             touch($_POST['boardname'] . "/head.txt");
             $q = fopen($_POST['boardname'] . "/localsettings.txt", "w");
             fputs($q, "boardname={$_POST['namename']}\n");
             fclose($q);
-            $glob = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-            foreach ($glob as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
-                $setting[$name] = $value;
-            }
+            $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
             $setting['boardname'] = $_POST['namename'];
 
             RebuildThreadList($_POST['boardname'], 1, true, false);
-            ?>
-            <link rel="stylesheet" href="admin.css">
-            <h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            <?= $_POST['namename'] ?> was created successfully.<p><a href="admin.php">Back
-            to
-            Admin Panel</a>
-            <?php exit;
-        case "saveboardsettings":
+            printSuccess("{$_POST['namename']} was created successfully.");
+            die();
+        case "saveboardsettings": // TODO
             if ($mylevel < 5000) fancyDie("Fnord! You don't have clearance for that.");
             if (!$_POST['bbs']) fancyDie("No BBS specified?");
             $fp = fopen("$_POST[bbs]/localsettings.txt", "w") or fancyDie("can't open localsettings.txt");
@@ -338,7 +356,19 @@ if(isset($_POST['action'])) {
             <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
             The settings for /<?= $_POST['bbs'] ?>/ have been updated.<p><a href="admin.php">Back to Admin Panel</a>
             <?php exit;
-        case "aborn":
+        case "writehead"; // TODO
+            doesHavePermisison($mylevel, 4900);
+            if (!$_POST['bbs']) {
+                fancyDie("no bbs?!");
+            }
+
+            $fp = fopen("{$_POST['bbs']}/head.txt", "w") or fancyDie("Couldn't open the file");
+            fwrite($fp, $_POST['file']);
+            fclose($fp);
+
+            printSuccess("Header file was written succesfully.");
+            die();
+        case "aborn": // TODO
             if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
             if (!is_numeric($_POST['id'])) fancyDie("no post?");
             $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
@@ -353,7 +383,7 @@ if(isset($_POST['action'])) {
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Post succesfully aborned.
             <?php exit;
-        case "editsubj":
+        case "editsubj": // TODO
             if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
             if (!$_POST['subj']) fancyDie("no subject? not good");
             $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
@@ -367,7 +397,7 @@ if(isset($_POST['action'])) {
             <meta http-equiv="refresh" content="0;admin.php?task=rebuildsubj&bbs=<?= $_POST['bbs'] ?>">
             Thread subject edited.
             <?php exit;
-        case "silentaborn":
+        case "silentaborn": // TODO
             if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
             if (!is_numeric($_POST['id'])) fancyDie("no post?");
             $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
@@ -381,31 +411,8 @@ if(isset($_POST['action'])) {
             ?>
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Post succesfully aborned.
-            <?php exit;
-        case "enactban":
-            if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
-            if (!$_POST['ip']) fancyDie("no ip to ban");
-            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['teeaccname']);
-            if ($_POST['message']) {
-                if (!is_numeric($_POST['id'])) fancyDie("no post?");
-                $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
-                list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
-                $thread[$_POST['id']] = "$name<>$date<>$trip<>$message<br><br><b style='color:red'>(USER WAS BANNED FOR THIS POST)</b><>$id<>$ip";
-                $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
-                foreach ($thread as $line) {
-                    fputs($k, $line);
-                }
-                fclose($k);
-            }
-            ?>
-            <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            <?= $_POST['ip'] ?> banned successfully.<p>
-            <?php if ($_POST['message']) echo "Ban message placed on post.<p>" ?>
-            <a href='admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>'>Rewrite index.html</a><br>
-            <a href="admin.php">Back to admin panel</a>
-            <?php exit;
-        case "delthread":
+            <?php exit; 
+        case "delthread": // TODO
             if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
             unlink("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't delete");
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
@@ -421,17 +428,6 @@ if(isset($_POST['action'])) {
             ?>
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Thread was deleted successfully.
-            <?php exit;
-        case "unban":
-            if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
-            if (!$_POST['id']) fancyDie("no id?");
-            deleteBan($_POST['id'])
-            ?>
-            <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            Unbanned successfully.
-            <p>
-            <a href="admin.php">Back to admin panel</a>
             <?php exit;
         default:
             break;
@@ -764,7 +760,7 @@ switch (@$_GET['task']) {
         if ($mylevel < 1000) fancyDie("You don't have clearance for that.");
 // settings file
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$_GET[bbs]/localsettings.txt");
+        $local = @file("{$_GET['bbs']}/localsettings.txt");
         if ($local) {
             foreach ($local as $tmp) {
                 $tmp = trim($tmp);
@@ -772,10 +768,10 @@ switch (@$_GET['task']) {
                 $setting[$name] = $value;
             }
         }
-        RebuildThreadList($_GET[bbs], 1, true, false);
+        RebuildThreadList($_GET['bbs'], 1, true, false);
         ?>
         <link rel="stylesheet" href="admin.css">
-        <meta http-equiv='refresh' content='1;<?= $setting[urltoforum] ?><?= $_GET[bbs] ?>/'>
+        <meta http-equiv='refresh' content='1;<?= $setting['urltoforum'] ?><?= $_GET['bbs'] ?>/'>
         In a few seconds, I'll take you over to the front page...
         <p><a href="admin.php">Back to Admin Panel</a>
         <?php exit;
@@ -836,23 +832,23 @@ switch (@$_GET['task']) {
         <?php exit;
     case "edithead":
         if ($mylevel < 4900) fancyDie("no soup for you");
-        if (!$_GET[bbs]) fancyDie("headache");
+        if (!$_GET['bbs']) fancyDie("headache");
         ?>
         <link rel="stylesheet" href="admin.css">
-        <h1>Editing head.txt for <?= $_GET[bbs] ?></h1>
+        <h1>Editing head.txt for <?= $_GET['bbs'] ?></h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         <p><a href="admin.php">Back to Admin Panel</a>
         <form action="admin.php" method="POST">
             <input type="hidden" name="action" value="writehead">
-            <input type="hidden" name="bbs" value="<?= $_GET[bbs] ?>">
-            <textarea rows="20" cols="80" name="file"><?php @readfile("$_GET[bbs]/head.txt"); ?></textarea><br>
+            <input type="hidden" name="bbs" value="<?= $_GET['bbs'] ?>">
+            <textarea rows="20" cols="80" name="file"><?php @readfile("{$_GET['bbs']}/head.txt"); ?></textarea><br>
             <input type="submit" value="Save settings">
         </form>
         <?php exit;
     case "settings":
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
-        if (!$_GET[bbs]) fancyDie("No BBS selected?!");
-        $local = file("$_GET[bbs]/localsettings.txt");
+        if (!$_GET['bbs']) fancyDie("No BBS selected?!");
+        $local = file("{$_GET['bbs']}/localsettings.txt");
         if ($local) {
             $local = array_map("htmlspecialchars", $local);
             foreach ($local as $tmp) {
@@ -863,13 +859,13 @@ switch (@$_GET['task']) {
             }
         }
         ?>
-        <link rel="stylesheet" href="admin.css"><h1>Change Forum Settings for /<?= $_GET[bbs] ?>/</h1>
+        <link rel="stylesheet" href="admin.css"><h1>Change Forum Settings for /<?= $_GET['bbs'] ?>/</h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a><p>
         <b>All settings filled in here will OVERRIDE global settings.</b>
         <form action="admin.php" method="POST">
             <h2>Basic Stuff</h2>
-            <?php if ($SETTING[encoding]) echo "Your default character encoding is $SETTING[encoding] and it is unwise to change that.<input type='hidden' name='encoding' value='$SETTING[encoding]'>"; else echo "Character encoding: <select name='encoding'><option value=''>Don't override default<option value='utf8'>UTF-8 (recommended)<option value='sjis'>Shift-JIS</select> (Once you set this, you can't change it)"; ?>
+            <?php if ($SETTING['encoding']) echo "Your default character encoding is {$SETTING['encoding']} and it is unwise to change that.<input type='hidden' name='encoding' value='{$SETTING['encoding']}'>"; else echo "Character encoding: <select name='encoding'><option value=''>Don't override default<option value='utf8'>UTF-8 (recommended)<option value='sjis'>Shift-JIS</select> (Once you set this, you can't change it)"; ?>
             <br>
             Skin: <select name="skin"><?php
                 $board = array();
@@ -883,51 +879,51 @@ switch (@$_GET['task']) {
                 if ($board == array()) fancyDie("</select>No skins?!");
                 foreach ($board as $tmp) {
                     $name = file_get_contents("includes/skin/$tmp/name.txt");
-                    if ($SETTING[skin] == $tmp) echo "<option value='$tmp' selected>$name</option>";
+                    if ($SETTING['skin'] == $tmp) echo "<option value='$tmp' selected>$name</option>";
                     else echo "<option value='$tmp'>$name</option>";
-                } ?></select> (Override?) <input name="overrideskin" <?= $SETTING[overrideskin] ?> type="checkbox">
-            <br>Board name: <input name="boardname" value="<?= $SETTING[boardname] ?>">
-            <br>Threads can only be started by admins? <input name="adminsonly" <?= $SETTING[adminsonly] ?>
+                } ?></select> (Override?) <input name="overrideskin" <?= $SETTING['overrideskin'] ?> type="checkbox">
+            <br>Board name: <input name="boardname" value="<?= $SETTING['boardname'] ?>">
+            <br>Threads can only be started by admins? <input name="adminsonly" <?= $SETTING['adminsonly'] ?>
                                                               type="checkbox">
-            <br>Threads are never bumped? <input name="neverbump" <?= $SETTING[neverbump] ?>
+            <br>Threads are never bumped? <input name="neverbump" <?= $SETTING['neverbump'] ?>
                                                               type="checkbox">
 
             <h2>Default names</h2>
-            <br>Default nickname: <input name="nameless" value="<?= $SETTING[nameless] ?>">
-            <br>Default aborn: <input name="aborn" value="<?= $SETTING[aborn] ?>">
+            <br>Default nickname: <input name="nameless" value="<?= $SETTING['nameless'] ?>">
+            <br>Default aborn: <input name="aborn" value="<?= $SETTING['aborn'] ?>">
 
             <h2>Boring things</h2>
-            Maximum number of replies: <input name="maxres" value="<?= $SETTING[maxres] ?>" size="5">
-            <br>Hash IP and display it next to post: <input type="checkbox" name="haship" <?= $SETTING[haship] ?>>
-            (Override?) <input name="overrideip" <?= $SETTING[overrideip] ?> type="checkbox">
+            Maximum number of replies: <input name="maxres" value="<?= $SETTING['maxres'] ?>" size="5">
+            <br>Hash IP and display it next to post: <input type="checkbox" name="haship" <?= $SETTING['haship'] ?>>
+            (Override?) <input name="overrideip" <?= $SETTING['overrideip'] ?> type="checkbox">
             <br>Add a Name field to the reply box (for use on small forums): <input type="checkbox"
-                                                                                    name="namefield" <?= $SETTING[namefield] ?>>
-            (Override?) <input name="overridename" <?= $SETTING[overridename] ?> type="checkbox">
-            <br>Posts per page: <input name="postsperpage" value="<?= $SETTING[postsperpage] ?>" size="5">
-            <br>Threads displayed on front page: <input name="fpthreads" value="<?= $SETTING[fpthreads] ?>" size="5">
+                                                                                    name="namefield" <?= $SETTING['namefield'] ?>>
+            (Override?) <input name="overridename" <?= $SETTING['overridename'] ?> type="checkbox">
+            <br>Posts per page: <input name="postsperpage" value="<?= $SETTING['postsperpage'] ?>" size="5">
+            <br>Threads displayed on front page: <input name="fpthreads" value="<?= $SETTING['fpthreads'] ?>" size="5">
             <br>Posts displayed on front page threads (not including first post): <input name="fpposts"
-                                                                                         value="<?= $SETTING[fpposts] ?>"
+                                                                                         value="<?= $SETTING['fpposts'] ?>"
                                                                                          size="5">
-            <br>Lines displayed on front page threads: <input name="fplines" value="<?= $SETTING[fplines] ?>" size="5">
+            <br>Lines displayed on front page threads: <input name="fplines" value="<?= $SETTING['fplines'] ?>" size="5">
             <br>Additional threads linked in front page table: <input name="additionalthreads"
-                                                                      value="<?= $SETTING[additionalthreads] ?>"
+                                                                      value="<?= $SETTING['additionalthreads'] ?>"
                                                                       size="5">
             <input type="hidden" name="action" value="saveboardsettings">
-            <input type="hidden" name="bbs" value="<?= $_GET[bbs] ?>">
+            <input type="hidden" name="bbs" value="<?= $_GET['bbs'] ?>">
 
             <p><input type="submit" value="Save Settings">
 
             <h2>Settings it would be unwise to override</h2>
-            Global forum name: <input name="forumname" value="<?= $SETTING[forumname] ?>" size="50">
-            <br>URL to forum: <input name="urltoforum" value="<?= $SETTING[urltoforum] ?>" size="50">
+            Global forum name: <input name="forumname" value="<?= $SETTING['forumname'] ?>" size="50">
+            <br>URL to forum: <input name="urltoforum" value="<?= $SETTING['urltoforum'] ?>" size="50">
         </form>
         <?php exit;
     case "manage":
         if ($mylevel < 1000) fancyDie("You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[tid] or fancyDie("no thread?");
-        $st = $_GET[st] or fancyDie("no start?");
-        $to = $_GET[ed] or fancyDie("no end?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['tid'] or fancyDie("no thread?");
+        $st = $_GET['st'] or fancyDie("no start?");
+        $to = $_GET['ed'] or fancyDie("no end?");
 // settings file
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = @file("$bbs/localsettings.txt");
@@ -973,8 +969,8 @@ switch (@$_GET['task']) {
         exit;
     case "editsubj":
         if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[dat] or fancyDie("no thread?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['dat'] or fancyDie("no thread?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = @file("$bbs/localsettings.txt");
         if ($local) {
@@ -1001,9 +997,9 @@ switch (@$_GET['task']) {
         exit;
     case "aborn":
         if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[dat] or fancyDie("no thread?");
-        $id = $_GET[id] or fancyDie("no post?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['dat'] or fancyDie("no thread?");
+        $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = @file("$bbs/localsettings.txt");
         if ($local) {
@@ -1032,16 +1028,16 @@ switch (@$_GET['task']) {
                 <input type="hidden" name="dat" value="<?= $key ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">
                 <input type="hidden" name="action" value="aborn">
-                <input name="abornmesg" value="<?= $setting[aborn] ?>">
+                <input name="abornmesg" value="<?= $setting['aborn'] ?>">
                 <input type="submit" value="Confirm!">
         </form>
         <?php
         exit;
     case "quietaborn":
         if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[dat] or fancyDie("no thread?");
-        $id = $_GET[id] or fancyDie("no post?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['dat'] or fancyDie("no thread?");
+        $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = @file("$bbs/localsettings.txt");
         if ($local) {
@@ -1076,9 +1072,9 @@ switch (@$_GET['task']) {
         exit;
     case "ban":
         if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[dat] or fancyDie("no thread?");
-        $id = $_GET[id] or fancyDie("no post?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['dat'] or fancyDie("no thread?");
+        $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = @file("$bbs/localsettings.txt");
         if ($local) {
@@ -1121,8 +1117,8 @@ switch (@$_GET['task']) {
         <?php exit;
     case "delthread":
         if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
-        $bbs = $_GET[bbs] or fancyDie("no board?");
-        $key = $_GET[dat] or fancyDie("no thread?");
+        $bbs = $_GET['bbs'] or fancyDie("no board?");
+        $key = $_GET['dat'] or fancyDie("no thread?");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Delete Confirmation</h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
@@ -1136,15 +1132,15 @@ switch (@$_GET['task']) {
         <input type="submit" value="Confirm!">
         <?php exit;
     case "threadstop";
-        chmod("$_GET[bbs]/dat/$_GET[dat].dat", 0440) or fancyDie("couldn't chmod");
+        chmod("{$_GET['bbs']}/dat/{$_GET['dat']}.dat", 0440) or fancyDie("couldn't chmod");
         ?>
-        <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET[bbs] ?>'>
+        <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully stopped.
         <?php exit;
     case "unthreadstop";
-        chmod("$_GET[bbs]/dat/$_GET[dat].dat", 0666) or fancyDie("couldn't chmod");
+        chmod("{$_GET['bbs']}/dat/{$_GET['dat']}.dat", 0666) or fancyDie("couldn't chmod");
         ?>
-        <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET[bbs] ?>'>
+        <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully unstopped.
         <?php exit; case "managebans":
     if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
@@ -1173,27 +1169,27 @@ switch (@$_GET['task']) {
     </table>
     <?php exit;
     case "cleanup":
-        if (!$_GET[bbs]) fancyDie("no bbs?");
+        if (!$_GET['bbs']) fancyDie("no bbs?");
         if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Cleanup</h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         Don't mess with these!
         <ul>
-            <li><a href="admin.php?bbs=<?= $_GET[bbs] ?>&task=confirmdel">Delete entire forum</a> (XXX)
-            <li><a href="admin.php?bbs=<?= $_GET[bbs] ?>&task=rebuildsubj">Rebuild subject.txt</a>
+            <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=confirmdel">Delete entire forum</a> (XXX)
+            <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=rebuildsubj">Rebuild subject.txt</a>
         </ul>
         <?php exit;
     case "rebuildsubj":
         if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
-        $handle = opendir("$_GET[bbs]/dat/") or fancyDie("no board");
+        $handle = opendir("{$_GET['bbs']}/dat/") or fancyDie("no board");
         $dats = array();
         while (false !== ($file = readdir($handle)))
             if (strstr($file, ".dat")) array_push($dats, $file);
         $finale = array();
         foreach ($dats as $dat) {
             $id = str_replace(".dat", "", $dat);
-            $munge = file("$_GET[bbs]/dat/$dat");
+            $munge = file("{$_GET['bbs']}/dat/$dat");
             list($subj, $unused, $icon) = explode("<=>", $munge[0]);
             $icon = rtrim($icon);
             list($name, $trip, $unused, $unused, $unused, $unused) = explode("<>", $munge[1]);
@@ -1204,14 +1200,14 @@ switch (@$_GET['task']) {
             $finale[$lastid] = "$subj<>$namae<>$icon<>$id<>$ll<>$lastn<>$lastid\n";
         }
         krsort($finale);
-        $fp = fopen("$_GET[bbs]/subject.txt", "w") or fancyDie("subject.txt writeerr!");
+        $fp = fopen("{$_GET['bbs']}/subject.txt", "w") or fancyDie("subject.txt writeerr!");
         foreach ($finale as $unused => $line) {
             echo "$unused<br>";
             fwrite($fp, $line);
         }
         fclose($fp);
         ?>
-        <meta http-equiv="refresh" content="1;admin.php?task=rebuild&bbs=<?= $_GET[bbs] ?>">
+        <meta http-equiv="refresh" content="1;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>">
         Subject.txt rewritten successfully.
         <?php
         exit;

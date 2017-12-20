@@ -33,7 +33,7 @@ if ($_POST['subj']) {
 }
 
 // If we're getting called to write a post, go for it.
-if ($_GET['shiichan'] == "writenew") {
+if (isset($_GET['shiichan']) && $_GET['shiichan'] == "writenew") {
     $second = time();
     if ($setting['posticons']) {
         $icons = "<input type='radio' name='icon' value='noicon.png' checked> No icon<br>";
@@ -83,7 +83,7 @@ if ($_GET['shiichan'] == "writenew") {
 }
 
 // If we're being called to write an advanced reply, write the advanced reply dammit.
-if ($_GET['id']) {
+if (isset($_GET['id'])) {
     $thread = file("{$_GET['bbs']}/dat/{$_GET['id']}.dat") or fancyDie("Couldn't open that thread");
     list ($threadname, $author, $lastposted) = explode("<=>", $thread[0]);
     $html = file_get_contents("includes/skin/{$setting['skin']}/addreply.txt");
@@ -100,7 +100,7 @@ if ($_GET['id']) {
     $html = str_replace("<%TEXTAREA%>", "<textarea rows='15' cols='75' name='mesg'></textarea><br><input type='submit' value='Add Reply'> <input name='sage' type='checkbox'> Sage?", $html);
     echo $html;
     exit;
-} else if ($_GET['bbs']) {
+} else if (isset($_GET['bbs'])) {
     echo "go fuck yourself";
     exit;
 }
@@ -111,8 +111,8 @@ if ($_GET['id']) {
 
 
 // check for ban
-if (checkBan($_SERVER['REMOTE_ADDR'])) {
-    fancyDie("<b>You have been banned from this message board.</b><p>The moderation team supplied this reason: <b>$reason</b>");
+if ($ban = getBan($_SERVER['REMOTE_ADDR'])) {
+    fancyDie("<b>You have been banned from this message board.</b><p>The moderation team supplied this reason: <b>{$ban['pubreason']}</b>");
 }
 
 // check for flood

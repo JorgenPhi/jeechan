@@ -58,10 +58,6 @@ function fancyDie($m) {
             <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo"
                                                                              title="Powered by teechan"></a></div>
             <?php echo $m;?>
-            <?php
-    if (isset($_POST['mesg'])) {
-        echo '<hr>' . $_POST['mesg'];
-    } ?>
             <hr>
             Powered by teechan <?php echo $teeversion ?>
         </td>
@@ -260,13 +256,14 @@ function checkMohel($name, $trip) {
     return false;
 }
 
-function checkBan($ip) {
+function getBan($ip) {
     global $tee_db;
-    $stmt = $tee_db->prepare("SELECT COUNT(*) FROM bans WHERE ip=:ip LIMIT 1");
+    $stmt = $tee_db->prepare("SELECT * FROM bans WHERE ip=:ip LIMIT 1");
     $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
     $stmt->execute();
-    if (intval($stmt->fetchColumn()) > 0) {
-        return true;
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        return $row;
     }
 
     return false;

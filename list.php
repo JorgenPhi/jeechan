@@ -28,8 +28,8 @@ if (!$list) {
 }
 foreach ($list as $line) {
     list ($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $line);
-    $time = date("j M Y H:i", $lasttime);
-    $icon = icons($i, $threadicon);
+    $time = date("j M Y H:i", intval($lasttime));
+    $icon = icons(@$i, $threadicon);
     echo "<tr><td><a href='" . linkToThread($_GET['bbs'], $id, "1-{$setting['postsperpage']}") . "'>$icon</a></td><td><a href='" . linkToThread($_GET['bbs'], $id, "l{$setting['postsperpage']}") . "'>$threadname</a></td><td>$author</td><td>$replies</td><td nowrap><small>$time</small></td></tr>";
 
 }

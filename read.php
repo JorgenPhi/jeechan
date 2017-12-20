@@ -31,7 +31,7 @@ if ($request != '') {
     if (!$pairs[3]) {
         $posts = array("1-");
         $st = 1;
-        $to = $setting[postsperpage];
+        $to = $setting['postsperpage'];
     } else {
         $posts = explode(',', $pairs[3]);
     }

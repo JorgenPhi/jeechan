@@ -176,6 +176,12 @@ function allBans() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function allMohels() {
+    global $tee_db;
+    $stmt = $tee_db->query("SELECT * FROM mohel ORDER BY id DESC");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 function updateAccountLevel($username, $level) {
     global $tee_db;
     $stmt = $tee_db->prepare("UPDATE accounts SET level=:level WHERE username=:username LIMIT 1");
@@ -212,6 +218,13 @@ function addAccount($username, $password, $level) {
     $stmt->execute();
 }
 
+function addMohel($mohel) {
+    global $tee_db, $myaccount;
+    $stmt = $tee_db->prepare("INSERT INTO mohel(mohel) VALUES(:mohel)");
+    $stmt->bindValue(':mohel', $mohel, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
 function checkMohel($name, $trip) {
     global $tee_db;
     $stmt = $tee_db->prepare("SELECT COUNT(*) FROM mohel WHERE mohel=:mohel LIMIT 1");
@@ -240,6 +253,13 @@ function deleteAccountByUsername($username) {
     global $tee_db;
     $stmt = $tee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
+function deleteMohel($id) {
+    global $tee_db;
+    $stmt = $tee_db->prepare("DELETE FROM mohel WHERE id=:id LIMIT 1");
+    $stmt->bindValue(':id', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
 

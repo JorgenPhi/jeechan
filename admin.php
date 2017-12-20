@@ -265,6 +265,7 @@ if(isset($_POST['action'])) {
             <?php exit;
         case "addmohel":
             if ($mylevel < 6000) fancyDie("You don't have permission for that.");
+            addMohel($_POST['mohel']);
 
             ?>
             <link rel="stylesheet"
@@ -273,6 +274,13 @@ if(isset($_POST['action'])) {
             That tripcode circumcision was added successfully.<p><a
             href="admin.php">Back to Admin Panel</a>
             <?php exit;
+        case "unmohel":
+    // delete a mohel from the db
+            doesHavePermisison($mylevel, 6000);
+
+            deleteMohel($_POST['id']);
+            printSuccess("That mohel was successfully deleted from the database.");
+            die();
         case "newb":
             if ($mylevel < 8000) fancyDie("You don't have clearance for that.");
             if (!$_POST['boardname']) fancyDie("Every board deserves a directory.");
@@ -514,10 +522,9 @@ switch (@$_GET['task']) {
             fancyDie("This information is not meant for you!");
         ?>
         <link rel="stylesheet" href="admin.css">
-        <a href="admin.php">Back to Admin Panel</a>
-
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         <h1>How to post with a capcode</h1>
+        <a href="admin.php">Back to Admin Panel</a>
         <ol>
             <li>Click the "advanced reply" link replying to a thread.
             <li>Fill in your admin username and password in the "Name" and "Pass" fields.
@@ -661,13 +668,31 @@ switch (@$_GET['task']) {
         <?php exit;
     case "mohel":
         if ($mylevel < 6000) fancyDie("Access denied"); ?>
-        <link rel="stylesheet" href="admin.css"><h1>Tripcode Circumcision</h1>
-        <p>Enter a name and/or tripcode you want circumcised. To only match a tripcode, prepend the hash: <b>#.CzKQna1OU</b></p>
+        <link rel="stylesheet" href="admin.css">
+        <h1>Tripcode Circumcision</h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <a href="admin.php">Back to Admin Panel</a>
+        <p>Enter a name and/or tripcode you want circumcised. To only match a tripcode, prepend the hash: <b>#.CzKQna1OU</b></p>
+    <table border="2">
+        <tr>
+            <th>Circumcised Name/Trip</th>
+            <th>Unban?</th>
+        </tr>
+        <?php 
+        $mohels = allMohels();
+        if (count($mohels) > 0) {
+            foreach ($mohels as $mohel) {
+                echo "<tr><td>{$mohel['mohel']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unmohel'><input type='hidden' name='id' value='{$mohel['id']}'><input type='submit' value='Unban'></form></td></tr>";
+            }
+        }
+        else echo "<tr><td colspan='2'>NO Mohels! HOORAY!</td></tr>";
+        ?>
+    </table>
         <form action='admin.php' method='POST'>
-            <a href="admin.php">Back to Admin Panel</a>
+            
             <p><input type="hidden" name="action"
                       value="addmohel"><input name="mohel"> <input type="submit" value="Circumcise"></form>
+
         <?php exit;
     case "global":
         if ($mylevel < 7000) fancyDie("Access denied");
@@ -770,6 +795,7 @@ switch (@$_GET['task']) {
         if ($mylevel < 8000) fancyDie("You don't have clearance for that."); ?>
         <link rel="stylesheet" href="admin.css">
         <h1>Create New Board</h1>
+        <p><a href="admin.php">Back to Admin Panel</a>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
         <form action="admin.php"
               method="POST"><input type="hidden" name="action" value="newb">
@@ -777,7 +803,6 @@ switch (@$_GET['task']) {
             Board name: <input name="namename"><br>
             <input type="submit" value="Create New Board">
         </form>
-        <p><a href="admin.php">Back to Admin Panel</a>
         <?php exit;
     case "rebuildtop":
         if ($mylevel < 9000) fancyDie("You don't have clearance for that.");
@@ -828,13 +853,13 @@ switch (@$_GET['task']) {
         <link rel="stylesheet" href="admin.css">
         <h1>Editing head.txt for <?= $_GET[bbs] ?></h1>
         <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <p><a href="admin.php">Back to Admin Panel</a>
         <form action="admin.php" method="POST">
             <input type="hidden" name="action" value="writehead">
             <input type="hidden" name="bbs" value="<?= $_GET[bbs] ?>">
             <textarea rows="20" cols="80" name="file"><?php @readfile("$_GET[bbs]/head.txt"); ?></textarea><br>
             <input type="submit" value="Save settings">
         </form>
-        <p><a href="admin.php">Back to Admin Panel</a>
         <?php exit;
     case "settings":
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
@@ -1152,7 +1177,7 @@ switch (@$_GET['task']) {
         $bans = allBans();
         if (count($bans) > 0) {
             foreach ($bans as $ban) {
-                echo "<tr><td>{$ban['ip']}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['by']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='ip' value='{$ban['ip']}><input type='submit' value='Unban'></form></td></tr>";
+                echo "<tr><td>{$ban['ip']}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['bannedby']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='ip' value='{$ban['ip']}><input type='submit' value='Unban'></form></td></tr>";
             }
         }
         else echo "<tr><td colspan='5'>NO BANS! HOORAY!</td></tr>";

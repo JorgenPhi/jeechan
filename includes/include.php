@@ -225,6 +225,17 @@ function addMohel($mohel) {
     $stmt->execute();
 }
 
+function addban($ip, $pubres, $privres, $bannedby) {
+    global $tee_db;
+    $stmt = $tee_db->prepare("INSERT INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
+    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->bindValue(':pubres', $pubres, PDO::PARAM_STR);
+    $stmt->bindValue(':privres', $privres, PDO::PARAM_STR);
+    $stmt->bindValue(':bannedby', $bannedby, PDO::PARAM_STR);
+    $stmt->bindValue(':at', time() , PDO::PARAM_INT);
+    $stmt->execute();
+}
+
 function checkMohel($name, $trip) {
     global $tee_db;
     $stmt = $tee_db->prepare("SELECT COUNT(*) FROM mohel WHERE mohel=:mohel LIMIT 1");
@@ -249,6 +260,18 @@ function checkMohel($name, $trip) {
     return false;
 }
 
+function checkBan($ip) {
+    global $tee_db;
+    $stmt = $tee_db->prepare("SELECT COUNT(*) FROM bans WHERE ip=:ip LIMIT 1");
+    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->execute();
+    if (intval($stmt->fetchColumn()) > 0) {
+        return true;
+    }
+
+    return false;
+}
+
 function deleteAccountByUsername($username) {
     global $tee_db;
     $stmt = $tee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
@@ -259,6 +282,13 @@ function deleteAccountByUsername($username) {
 function deleteMohel($id) {
     global $tee_db;
     $stmt = $tee_db->prepare("DELETE FROM mohel WHERE id=:id LIMIT 1");
+    $stmt->bindValue(':id', $id, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
+function deleteBan($id) {
+    global $tee_db;
+    $stmt = $tee_db->prepare("DELETE FROM bans WHERE id=:id LIMIT 1");
     $stmt->bindValue(':id', $id, PDO::PARAM_STR);
     $stmt->execute();
 }

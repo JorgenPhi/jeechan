@@ -277,7 +277,7 @@ if(isset($_POST['action'])) {
         case "unmohel":
     // delete a mohel from the db
             doesHavePermisison($mylevel, 6000);
-
+            if (!$_POST['id']) fancyDie("no id?");
             deleteMohel($_POST['id']);
             printSuccess("That mohel was successfully deleted from the database.");
             die();
@@ -385,10 +385,7 @@ if(isset($_POST['action'])) {
         case "enactban":
             if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
             if (!$_POST['ip']) fancyDie("no ip to ban");
-            $fp = fopen("bans.cgi", "a");
-            fwrite($fp, "{$_POST['ip']}<>{$_POST['pubres']}<>{$_POST['privres']}<>{$_COOKIE['teeaccname']}\n");
-            fclose($fp);
-            chmod("bans.cgi", 0770);
+            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['teeaccname']);
             if ($_POST['message']) {
                 if (!is_numeric($_POST['id'])) fancyDie("no post?");
                 $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
@@ -427,21 +424,12 @@ if(isset($_POST['action'])) {
             <?php exit;
         case "unban":
             if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
-            if (!$_POST['ip']) fancyDie("no ip?");
-            $file = file("bans.cgi");
-            for ($i = 0; $i < count($file); $i++) {
-                list ($ip, $unused, $unused) = explode("<>", $file[$i]);
-                if (strstr($_SERVER['REMOTE_ADDR'], $ip)) $file[$i] = "";
-            }
-            $k = fopen("bans.cgi", "w") or fancyDie("couldn't write");
-            foreach ($file as $line) {
-                fputs($k, $line);
-            }
-            fclose($k);
+            if (!$_POST['id']) fancyDie("no id?");
+            deleteBan($_POST['id'])
             ?>
             <link rel="stylesheet" href="admin.css"><h1>Success</h1>
             <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            <?= $_POST['ip'] ?> unbanned successfully.
+            Unbanned successfully.
             <p>
             <a href="admin.php">Back to admin panel</a>
             <?php exit;
@@ -1177,7 +1165,7 @@ switch (@$_GET['task']) {
         $bans = allBans();
         if (count($bans) > 0) {
             foreach ($bans as $ban) {
-                echo "<tr><td>{$ban['ip']}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['bannedby']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='ip' value='{$ban['ip']}><input type='submit' value='Unban'></form></td></tr>";
+                echo "<tr><td>{$ban['ip']}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['bannedby']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='id' value='{$ban['id']}'><input type='submit' value='Unban'></form></td></tr>";
             }
         }
         else echo "<tr><td colspan='5'>NO BANS! HOORAY!</td></tr>";

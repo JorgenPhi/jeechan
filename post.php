@@ -111,10 +111,8 @@ if ($_GET['id']) {
 
 
 // check for ban
-$file = @file("bans.cgi");
-if ($file) foreach ($file as $line) {
-    list ($ip, $reason, $unused, $unused) = explode("<>", $line);
-    if (strstr($_SERVER['REMOTE_ADDR'], $ip)) fancyDie("<b>You have been banned from this message board.</b><p>The moderation team supplied this reason: <b>$reason</b>");
+if (checkBan($_SERVER['REMOTE_ADDR'])) {
+    fancyDie("<b>You have been banned from this message board.</b><p>The moderation team supplied this reason: <b>$reason</b>");
 }
 
 // check for flood

@@ -115,7 +115,7 @@ if(isset($_POST['action'])) {
             doesHavePermisison($mylevel, 9000);
             
             // Verify information
-            if (!$_POST['password']) {
+            if (!isset($_POST['password']) || trim($_POST['password']) == "") {
                 fancyDie("Password cannot be blank.");
             } 
             if (!is_numeric($_POST['level'])) {
@@ -166,7 +166,7 @@ if(isset($_POST['action'])) {
         case "pleasechangemypasswordthankyou":
     // changing your password
             doesHavePermisison($mylevel, 1);
-            if (!$_POST['p1']) {
+            if (!isset($_POST['p1']) || trim($_POST['p1']) == "") {
                 fancyDie("Password cannot be blank.");
             }
             if (!isset($_POST['jeeaccpasschk']) || !password_verify($_POST['jeeaccpasschk'], $myaccount['password'])) {
@@ -204,6 +204,9 @@ if(isset($_POST['action'])) {
         case "modifymycapcodebecauseilikecapcodes":
     // Modify capcode
             doesHavePermisison($mylevel, 10);
+            if (!isset($_POST['cap'])) {
+                fancyDie("You didn't enter a capcode.");
+            }
 
             updateAccountCapcode($myaccount['username'], $_POST['cap']);
             printSuccess("Your capcode is now <b>{$_POST['cap']}</b>.");
@@ -217,6 +220,9 @@ if(isset($_POST['action'])) {
             }
             if (intval($capcode_account['level']) > 9000 && $mylevel < 9999) {
                 fancyDie("You don't have permission for that.");
+            }
+            if (!isset($_POST['cap'])) {
+                fancyDie("You didn't enter a capcode.");
             }
 
             updateAccountCapcode($_POST['user'], $_POST['cap']);
@@ -251,7 +257,7 @@ if(isset($_POST['action'])) {
             die();
         case "addmohel":
             doesHavePermisison($mylevel, 6000);
-            if (!$_POST['mohel']) {
+            if (!isset($_POST['mohel'])) {
                 fancyDie("no mohel?!");
             }
 
@@ -262,7 +268,7 @@ if(isset($_POST['action'])) {
         case "unmohel":
     // delete a mohel from the db
             doesHavePermisison($mylevel, 6000);
-            if (!$_POST['id']) {
+            if (!isset($_POST['id'])) {
                 fancyDie("no id?");
             }
 
@@ -272,7 +278,7 @@ if(isset($_POST['action'])) {
             die();
         case "enactban":
             doesHavePermisison($mylevel, 3000);
-            if (!$_POST['ip']) {
+            if (!isset($_POST['ip'])) {
                 fancyDie("no ip to ban");
             }
 
@@ -297,7 +303,7 @@ if(isset($_POST['action'])) {
             die();
         case "unban":
             doesHavePermisison($mylevel, 3000);
-            if (!$_POST['id']) {
+            if (!isset($_POST['id'])) {
                 fancyDie("no id?");
             }
             deleteBan($_POST['id']);
@@ -402,7 +408,7 @@ if(isset($_POST['action'])) {
             die();
         case "writehead"; // TODO
             doesHavePermisison($mylevel, 4900);
-            if (!$_POST['bbs']) {
+            if (!isset($_POST['bbs'])) {
                 fancyDie("no bbs?!");
             }
 

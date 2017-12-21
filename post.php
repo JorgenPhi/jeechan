@@ -1,6 +1,6 @@
 <?php
-/* teechan
- * https://github.com/tslocum/teechan
+/* jeechan
+ * https://github.com/JorgenPhi/jeechan
  * http://wakaba.c3.cx/shii/shiichan
  *
  * Add post
@@ -74,7 +74,7 @@ if (isset($_GET['shiichan']) && $_GET['shiichan'] == "writenew") {
     $html = str_replace("<%FORUMNAME%>", $setting['forumname'], $html);
     $html = str_replace("<%BOARDNAME%>", $setting['boardname'], $html);
     $html = str_replace("<%BOARDURL%>", $_GET['bbs'], $html);
-    if ($_COOKIE['teeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['teeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
+    if ($_COOKIE['jeeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
     if ($setting['adminsonly']) $html = str_replace("<%ADMINSONLY%>", "<h2 style='background:none;color:red'>Only administrators can post threads to this forum!</h2>", $html); else $html = str_replace("<%ADMINSONLY%>", "", $html);
     $html = str_replace("<%STARTFORM%>", "<form name='post' action='post.php' method='POST'><input type='hidden' name='bbs' value='{$_GET['bbs']}'><input type='hidden' name='id' value='$second'><input type='hidden' name='shiichan' value='proper'>", $html);
     $html = str_replace("<%TEXTAREA%>", "<textarea rows='15' cols='75' name='mesg'></textarea><br><input type='submit' value='Create Thread'>", $html);
@@ -87,7 +87,7 @@ if (isset($_GET['id'])) {
     $thread = file("{$_GET['bbs']}/dat/{$_GET['id']}.dat") or fancyDie("Couldn't open that thread");
     list ($threadname, $author, $lastposted) = explode("<=>", $thread[0]);
     $html = file_get_contents("includes/skin/{$setting['skin']}/addreply.txt");
-    if ($_COOKIE['teeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['teeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
+    if ($_COOKIE['jeeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
     if (!is_writable("{$_GET['bbs']}/dat/{$_GET['id']}.dat")) $html = str_replace("<%THREADSTOPPED%>", "<h3>This thread is threadstopped!!</h3>", $html); else $html = str_replace("<%THREADSTOPPED%>", "", $html);
     $html = str_replace("<%THREADNAME%>", $threadname, $html);
     $html = str_replace("<%FORUMNAME%>", $setting['forumname'], $html);
@@ -193,7 +193,7 @@ if ($_POST['pass']) {
 // ID hash 
     $idcrypt = " ";
     if ($setting['haship']) {
-        $idcrypt .= "ID: " . substr(base64_encode(pack("H*", sha1($_SERVER['REMOTE_ADDR'] . date("d") . TEE_SALT))), 1, 8) . " ";
+        $idcrypt .= "ID: " . substr(base64_encode(pack("H*", sha1($_SERVER['REMOTE_ADDR'] . date("d") . JEE_SALT))), 1, 8) . " ";
     }
 
 #### funky tripcode time ###########
@@ -214,7 +214,7 @@ if ($_POST['pass']) {
         }
 
         if ($sectrip != "") {
-            $sha = base64_encode(pack("H*", sha1($sectrip . TEE_SALT)));
+            $sha = base64_encode(pack("H*", sha1($sectrip . JEE_SALT)));
             $sha = substr($sha, 0, 15);
             $trip .= "#" . $sha;
         }
@@ -350,4 +350,4 @@ RebuildThreadList($_POST['bbs'], $_POST['id'], ($setting['neverbump'] && !$isnew
     <br>
     <small><a href='<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>Click here to be forwarded manually</a></small>
     <hr>
-    Powered by teechan v.<?php echo $teeversion;
+    Powered by jeechan v.<?php echo $JEEVERSION;

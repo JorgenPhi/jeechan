@@ -1,6 +1,6 @@
 <?php
-/* teechan
-* https://github.com/tslocum/teechan
+/* jeechan
+* https://github.com/JorgenPhi/jeechan
 * http://wakaba.c3.cx/shii/shiichan
 *
 * Basic includes
@@ -12,15 +12,15 @@ require 'includes/lib/abbc/abbc.lib.php';
  // ABBC BBCode processor.
 // current version (int)
 
-define("TEEVERSION", 6900);
-$teeversion = 6900;
+define("JEEVERSION", 6900);
+$JEEVERSION = 6900;
 
 if (!defined('PDO::ATTR_DRIVER_NAME')) {
     fancyDie("PDO isn't installed!  It is installed by default in PHP 5.1.0 and newer, you should upgrade your PHP version.  You can install PDO manually by running the command: <b>pear install pdo</b>");
 }
 
 try {
-    $tee_db = new PDO(TEE_PDODSN, TEE_PDOUSER, TEE_PDOPASS, array(
+    $jee_db = new PDO(JEE_PDODSN, JEE_PDOUSER, JEE_PDOPASS, array(
         PDO::ATTR_EMULATE_PREPARES => false,
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ));
@@ -33,7 +33,7 @@ catch(PDOException $ex) {
 // Report fatal errors.
 
 function fancyDie($m) {
-    global $teeversion;
+    global $JEEVERSION;
 ?>
     <title>Fatal Error</title>
     <style type="text/css">
@@ -55,19 +55,19 @@ function fancyDie($m) {
         <td>
             <h1>Fatal error!</h1>
 
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo"
-                                                                             title="Powered by teechan"></a></div>
+            <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo"
+                                                                             title="Powered by jeechan"></a></div>
             <?php echo $m;?>
             <hr>
-            Powered by teechan <?php echo $teeversion ?>
+            Powered by jeechan <?php echo $JEEVERSION ?>
         </td>
     </tr></table><?php
     exit;
 }
 
 function getGlobalSettings() {
-    global $tee_db;
-    $stmt = $tee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rows as $row) {
@@ -82,30 +82,30 @@ function getGlobalSettings() {
 }
 
 function setGlobalSettings($settings) {
-    global $tee_db;
+    global $jee_db;
     $settings = json_encode($settings);
     if(!getGlobalSettings()) {
         // Create the key
-        $stmt = $tee_db->prepare("INSERT INTO settings(name,value) VALUES('_globalsettings',:settings)");
+        $stmt = $jee_db->prepare("INSERT INTO settings(name,value) VALUES('_globalsettings',:settings)");
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
     } else {
         // Update
-        $stmt = $tee_db->prepare("UPDATE settings SET value=:settings WHERE name='_globalsettings'");
+        $stmt = $jee_db->prepare("UPDATE settings SET value=:settings WHERE name='_globalsettings'");
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
     }
 }
 
 function linkToThread($board, $thread, $posts = '') {
-    if (TEE_PRETTYURLS) {
+    if (JEE_PRETTYURLS) {
         return 'read.php/' . $board . '/' . $thread . '/' . $posts;
     } else {
         return 'read.php?b=' . $board . '&t=' . $thread . ($posts != '' ? ('&p=' . $posts) : '');
     }
 }
 
-function teeHashPassword($password) {
+function jeeHashPassword($password) {
     return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 }
 
@@ -120,7 +120,7 @@ function newLoginKey() {
 }
 
 function checkCredentials($username, $password) {
-    global $tee_db;
+    global $jee_db;
     $account = accountByUsername($username);
     if (is_array($account)) {
         if (password_verify($password, $account['password'])) {
@@ -134,8 +134,8 @@ function checkCredentials($username, $password) {
 }
 
 function checkLoginKey($username, $loginkey) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("SELECT * FROM accounts WHERE username=:username AND loginkey=:loginkey LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT * FROM accounts WHERE username=:username AND loginkey=:loginkey LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', $loginkey, PDO::PARAM_STR);
     $stmt->execute();
@@ -148,8 +148,8 @@ function checkLoginKey($username, $loginkey) {
 }
 
 function accountByUsername($username) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("SELECT * FROM accounts WHERE username=:username LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT * FROM accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
     $accounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -161,53 +161,53 @@ function accountByUsername($username) {
 }
 
 function allAccounts() {
-    global $tee_db;
-    $stmt = $tee_db->query("SELECT * FROM accounts ORDER BY level DESC");
+    global $jee_db;
+    $stmt = $jee_db->query("SELECT * FROM accounts ORDER BY level DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function allBans() {
-    global $tee_db;
-    $stmt = $tee_db->query("SELECT * FROM bans ORDER BY at DESC");
+    global $jee_db;
+    $stmt = $jee_db->query("SELECT * FROM bans ORDER BY at DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function allMohels() {
-    global $tee_db;
-    $stmt = $tee_db->query("SELECT * FROM mohel ORDER BY id DESC");
+    global $jee_db;
+    $stmt = $jee_db->query("SELECT * FROM mohel ORDER BY id DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function updateAccountLevel($username, $level) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("UPDATE accounts SET level=:level WHERE username=:username LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("UPDATE accounts SET level=:level WHERE username=:username LIMIT 1");
     $stmt->bindValue(':level', intval($level) , PDO::PARAM_INT);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function updateAccountPassword($username, $password) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("UPDATE accounts SET password=:password,loginkey=:loginkey WHERE username=:username LIMIT 1");
-    $stmt->bindValue(':password', teeHashPassword($password) , PDO::PARAM_STR);
+    global $jee_db;
+    $stmt = $jee_db->prepare("UPDATE accounts SET password=:password,loginkey=:loginkey WHERE username=:username LIMIT 1");
+    $stmt->bindValue(':password', jeeHashPassword($password) , PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', newLoginKey() , PDO::PARAM_STR);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function updateAccountCapcode($username, $capcode) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("UPDATE accounts SET capcode=:capcode WHERE username=:username LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("UPDATE accounts SET capcode=:capcode WHERE username=:username LIMIT 1");
     $stmt->bindValue(':capcode', $capcode, PDO::PARAM_STR);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function addAccount($username, $password, $level) {
-    global $tee_db, $myaccount;
-    $stmt = $tee_db->prepare("INSERT INTO accounts(username,password,loginkey,addedby,level) VALUES(:username,:password,:loginkey,:addedby,:level)");
+    global $jee_db, $myaccount;
+    $stmt = $jee_db->prepare("INSERT INTO accounts(username,password,loginkey,addedby,level) VALUES(:username,:password,:loginkey,:addedby,:level)");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
-    $stmt->bindValue(':password', teeHashPassword($password) , PDO::PARAM_STR);
+    $stmt->bindValue(':password', jeeHashPassword($password) , PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', newLoginKey() , PDO::PARAM_STR);
     $stmt->bindValue(':addedby', (is_array($myaccount) ? intval($myaccount['id']) : 0) , PDO::PARAM_INT);
     $stmt->bindValue(':level', intval($level) , PDO::PARAM_INT);
@@ -215,15 +215,15 @@ function addAccount($username, $password, $level) {
 }
 
 function addMohel($mohel) {
-    global $tee_db, $myaccount;
-    $stmt = $tee_db->prepare("INSERT INTO mohel(mohel) VALUES(:mohel)");
+    global $jee_db, $myaccount;
+    $stmt = $jee_db->prepare("INSERT INTO mohel(mohel) VALUES(:mohel)");
     $stmt->bindValue(':mohel', $mohel, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function addban($ip, $pubres, $privres, $bannedby) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("INSERT INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
+    global $jee_db;
+    $stmt = $jee_db->prepare("INSERT INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
     $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
     $stmt->bindValue(':pubres', $pubres, PDO::PARAM_STR);
     $stmt->bindValue(':privres', $privres, PDO::PARAM_STR);
@@ -233,8 +233,8 @@ function addban($ip, $pubres, $privres, $bannedby) {
 }
 
 function checkMohel($name, $trip) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("SELECT COUNT(*) FROM mohel WHERE mohel=:mohel LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT COUNT(*) FROM mohel WHERE mohel=:mohel LIMIT 1");
     $stmt->bindValue(':mohel', $name, PDO::PARAM_STR);
     $stmt->execute();
     if (intval($stmt->fetchColumn()) > 0) {
@@ -257,8 +257,8 @@ function checkMohel($name, $trip) {
 }
 
 function getBan($ip) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("SELECT * FROM bans WHERE ip=:ip LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT * FROM bans WHERE ip=:ip LIMIT 1");
     $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -270,22 +270,22 @@ function getBan($ip) {
 }
 
 function deleteAccountByUsername($username) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function deleteMohel($id) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("DELETE FROM mohel WHERE id=:id LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("DELETE FROM mohel WHERE id=:id LIMIT 1");
     $stmt->bindValue(':id', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function deleteBan($id) {
-    global $tee_db;
-    $stmt = $tee_db->prepare("DELETE FROM bans WHERE id=:id LIMIT 1");
+    global $jee_db;
+    $stmt = $jee_db->prepare("DELETE FROM bans WHERE id=:id LIMIT 1");
     $stmt->bindValue(':id', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
@@ -298,7 +298,7 @@ function doesHavePermisison($userLevel, $reuqiredLevel) {
 
 function printSuccess($message) { ?>
     <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-    <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+    <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
     <p><?php echo $message ?></p>
     <a href="admin.php">Back to Admin Panel</a>
     <?php
@@ -350,7 +350,7 @@ function PrintPages($numposts, $boardname, $threadid, $postsperpage) {
 }
 
 function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
-    global $setting, $teeversion;
+    global $setting, $JEEVERSION;
     $postthing = 1;
     $postfile = file_get_contents("includes/skin/".$setting['skin']."/post.txt");
     $thread = file("$boardname/dat/$threadid.dat");
@@ -441,7 +441,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
 
     if ($isitreadphp) { // read.php takes its skin file
         $bottom = file_get_contents("includes/skin/".$setting['skin']."/threadbottom.txt");
-        $bottom = str_replace("<%TEEVERSION%>", $teeversion, $bottom);
+        $bottom = str_replace("<%JEEVERSION%>", $JEEVERSION, $bottom);
     }
     else $bottom = file_get_contents("includes/skin/".$setting['skin']."/smallthreadbottom.txt");
     $bottom = str_replace("<%NUMPOSTS%>", $numposts + 1, $bottom);
@@ -458,7 +458,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
 // ### shall we rewrite index.html?
 
 function RebuildThreadList($bbs, $thisid, $sage, $rmthread) {
-    global $setting, $teeversion;
+    global $setting, $JEEVERSION;
     $subject = file("$bbs/subject.txt");
     if ($thisid != 1) {
         global $_POST, $thisverysecond;
@@ -552,7 +552,7 @@ function RebuildThreadList($bbs, $thisid, $sage, $rmthread) {
     }
 
     $bottom = file_get_contents("includes/skin/".$setting['skin']."/boardbottom.txt");
-    $bottom = str_replace("<%TEEVERSION%>", $teeversion, $bottom);
+    $bottom = str_replace("<%JEEVERSION%>", $JEEVERSION, $bottom);
     fputs($f, $bottom);
     fclose($f);
 }

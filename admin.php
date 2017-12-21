@@ -1,6 +1,6 @@
 <?php
-/* teechan
- * https://github.com/tslocum/teechan
+/* jeechan
+ * https://github.com/JorgenPhi/jeechan
  * http://wakaba.c3.cx/shii/shiichan
  *
  * Admin panel
@@ -12,9 +12,9 @@ require "includes/include.php";
 function login($why) {
     $mesg = "";
     if ($why != 0) {
-        setcookie("teeaccname", "",
+        setcookie("jeeaccname", "",
             time() - 3600);
-        setcookie("teeacckey", "", time() - 3600);
+        setcookie("jeeacckey", "", time() - 3600);
     }
     switch ($why) {
         case 1:
@@ -57,7 +57,7 @@ function login($why) {
             text-align: right
         }</style>
     <?= $mesg ?>
-    <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+    <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
     <form action="admin.php" method="POST">
         <table>
             <tr>
@@ -65,11 +65,11 @@ function login($why) {
             </tr>
             <tr>
                 <td>Username</td>
-                <td><input name="teeaccname"></td>
+                <td><input name="jeeaccname"></td>
             </tr>
             <tr>
                 <td>Password</td>
-                <td><input type="password" name="teeaccpass"></td>
+                <td><input type="password" name="jeeaccpass"></td>
             </tr>
             <tr>
                 <td colspan="2"><input type="submit" value="Login"></td>
@@ -80,29 +80,29 @@ function login($why) {
 }
 
 // Check for login submission or stored session key
-if ((!$_COOKIE['teeaccname'] || !$_COOKIE['teeacckey']) && (!isset($_POST['teeaccname']) && !isset($_POST['teeaccpass']))) {
+if ((!isset($_COOKIE['jeeaccname']) || !isset($_COOKIE['jeeacckey'])) && (!isset($_POST['jeeaccname']) && !isset($_POST['jeeaccpass']))) {
     login(0);
 }
 $loggedin = false;
 // Check passwor or stored session key
-if (isset($_POST['teeaccpass'])) {
-    $myaccount = checkCredentials($_POST['teeaccname'], $_POST['teeaccpass']);
+if (isset($_POST['jeeaccpass'])) {
+    $myaccount = checkCredentials($_POST['jeeaccname'], $_POST['jeeaccpass']);
 } else {
-    $myaccount = checkLoginKey($_COOKIE['teeaccname'], $_COOKIE['teeacckey']);
+    $myaccount = checkLoginKey($_COOKIE['jeeaccname'], $_COOKIE['jeeacckey']);
 }
 if (is_array($myaccount)) { // Credentials/key validated
     $loggedin = true;
     $mylevel = intval($myaccount['level']);
 
-    $_COOKIE['teeaccname'] = $myaccount['username'];
-    $_COOKIE['teeacckey'] = $myaccount['loginkey'];
+    $_COOKIE['jeeaccname'] = $myaccount['username'];
+    $_COOKIE['jeeacckey'] = $myaccount['loginkey'];
 } else { // Invalid credentials/key
     login($myaccount);
 }
 // Logged in
-if (isset($_POST['teeaccname'])) {
-    setcookie("teeaccname", $_COOKIE['teeaccname']);
-    setcookie("teeacckey", $_COOKIE['teeacckey']);
+if (isset($_POST['jeeaccname'])) {
+    setcookie("jeeaccname", $_COOKIE['jeeaccname']);
+    setcookie("jeeacckey", $_COOKIE['jeeacckey']);
 }
 
 ################################################################################
@@ -169,7 +169,7 @@ if(isset($_POST['action'])) {
             if (!$_POST['p1']) {
                 fancyDie("Password cannot be blank.");
             }
-            if (!isset($_POST['teeaccpasschk']) || !password_verify($_POST['teeaccpasschk'], $myaccount['password'])) {
+            if (!isset($_POST['jeeaccpasschk']) || !password_verify($_POST['jeeaccpasschk'], $myaccount['password'])) {
                 fancyDie("You didn't enter your current password.");
             }
             if ($_POST['p1'] != $_POST['p2']) {
@@ -276,7 +276,7 @@ if(isset($_POST['action'])) {
                 fancyDie("no ip to ban");
             }
 
-            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['teeaccname']);
+            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['jeeaccname']);
 
             if ($_POST['message']) { // TODO
                 if (!is_numeric($_POST['id'])) fancyDie("no post?");
@@ -353,7 +353,7 @@ if(isset($_POST['action'])) {
             fclose($fp);
             ?>
             <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+            <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
             The settings for /<?= $_POST['bbs'] ?>/ have been updated.<p><a href="admin.php">Back to Admin Panel</a>
             <?php exit;
         case "writehead"; // TODO
@@ -440,8 +440,8 @@ switch (@$_GET['task']) {
     default: // Admin panel
         ?>
             <link rel="stylesheet" href="admin.css"><h1>Registered User Options Panel</h1>
-            <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
-            Welcome, <b><?= $_COOKIE['teeaccname'] ?></b>.
+            <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
+            Welcome, <b><?= $_COOKIE['jeeaccname'] ?></b>.
             Your current e-penis size is <b><?= $mylevel ?>cm (<?php
             if ($mylevel == 9999) echo "<span style='color:red'>Webmaster</span>";
             else if ($mylevel >= 9000) echo "Operator";
@@ -506,7 +506,7 @@ switch (@$_GET['task']) {
             fancyDie("This information is not meant for you!");
         ?>
         <link rel="stylesheet" href="admin.css">
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <h1>How to post with a capcode</h1>
         <a href="admin.php">Back to Admin Panel</a>
         <ol>
@@ -528,7 +528,7 @@ switch (@$_GET['task']) {
     case "alladmins":
         if ($mylevel < 9000) fancyDie("You don't have permission for that!");?>
         <link rel="stylesheet" href="admin.css"><h1>Manage All Registered Accounts</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a>
         <table>
             <tr>
@@ -605,11 +605,11 @@ switch (@$_GET['task']) {
 // Capcode
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Edit Capcode</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a>
         <p><h2>Current capcode</h2><?php
         $code = $myaccount['capcode'];
-        if (trim($code) == '') $code = "<b style='color:#f00'>{$_COOKIE['teeaccname']}</b>";
+        if (trim($code) == '') $code = "<b style='color:#f00'>{$_COOKIE['jeeaccname']}</b>";
         ?>
         <?= $code ?>
         <br><h2>Change capcode</h2>
@@ -621,10 +621,10 @@ switch (@$_GET['task']) {
         ?>
         <link rel="stylesheet" href="admin.css">
         <h1>Change Password</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a><p>
         <form action='admin.php' method='POST'><h2>Current Password</h2>
-            For security: <input type="password" name="teeaccpasschk"><br>
+            For security: <input type="password" name="jeeaccpasschk"><br>
 
             <h2>New Password</h2>
             <input type="hidden" name="action" value="pleasechangemypasswordthankyou">New:
@@ -641,7 +641,7 @@ switch (@$_GET['task']) {
         $code = $existing_account['capcode'];
         if (trim($code) == '') $code = "<b style='color:#f00'>{$_GET['tochange']}</b>" ?>
         <link rel="stylesheet" href="admin.css"><h1>Edit User's Capcode</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a>
         <p><h2><?= $_GET['tochange'] ?>'s current capcode</h2><?= $code ?>
         <br><h2>Change capcode</h2>
@@ -654,7 +654,7 @@ switch (@$_GET['task']) {
         if ($mylevel < 6000) fancyDie("Access denied"); ?>
         <link rel="stylesheet" href="admin.css">
         <h1>Tripcode Circumcision</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a>
         <p>Enter a name and/or tripcode you want circumcised. To only match a tripcode, prepend the hash: <b>#.CzKQna1OU</b></p>
     <table border="2">
@@ -705,7 +705,7 @@ switch (@$_GET['task']) {
             $SETTING = $global;
         } ?>
         <link rel="stylesheet" href="admin.css"><h1>Change Global Settings</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a><p><?= $mesg ?>
         <form action="admin.php" method="POST"><h2>Basic Settings</h2>
             Forum name: <input name="forumname" value="<?= $SETTING['forumname'] ?>" size="50">
@@ -780,7 +780,7 @@ switch (@$_GET['task']) {
         <link rel="stylesheet" href="admin.css">
         <h1>Create New Board</h1>
         <p><a href="admin.php">Back to Admin Panel</a>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <form action="admin.php"
               method="POST"><input type="hidden" name="action" value="newb">
             Directory name: <input name="boardname"><br>
@@ -819,7 +819,7 @@ switch (@$_GET['task']) {
             fputs($index, file_get_contents("$board_single/head.txt"));
         }
         $bottom = file_get_contents("includes/skin/{$setting['skin']}/forumsbottom.txt");
-        $bottom = str_replace("<%TEEVERSION%>", $teeversion, $bottom);
+        $bottom = str_replace("<%JEEVERSION%>", $JEEVERSION, $bottom);
         fputs($index, $bottom);
         fclose($index);
 
@@ -827,7 +827,7 @@ switch (@$_GET['task']) {
         <link rel="stylesheet" href="admin.css">
         <h1>Success</h1>
         index.html was generated successfully.
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <p><a href="admin.php">Back to Admin Panel</a>
         <?php exit;
     case "edithead":
@@ -836,7 +836,7 @@ switch (@$_GET['task']) {
         ?>
         <link rel="stylesheet" href="admin.css">
         <h1>Editing head.txt for <?= $_GET['bbs'] ?></h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <p><a href="admin.php">Back to Admin Panel</a>
         <form action="admin.php" method="POST">
             <input type="hidden" name="action" value="writehead">
@@ -860,7 +860,7 @@ switch (@$_GET['task']) {
         }
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Change Forum Settings for /<?= $_GET['bbs'] ?>/</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         <a href="admin.php">Back to Admin Panel</a><p>
         <b>All settings filled in here will OVERRIDE global settings.</b>
         <form action="admin.php" method="POST">
@@ -1086,7 +1086,7 @@ switch (@$_GET['task']) {
         }
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Ban Confirmation</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         Ban the user who made this post?
         <blockquote>
             <?php
@@ -1121,7 +1121,7 @@ switch (@$_GET['task']) {
         $key = $_GET['dat'] or fancyDie("no thread?");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Delete Confirmation</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         Really delete this thread?
         <form action="admin.php" method="post">
         <p>
@@ -1148,7 +1148,7 @@ switch (@$_GET['task']) {
     <link rel="stylesheet" href="admin.css">
     <h1>Bans</h1>
     <a href="admin.php">Back to Admin Panel</a><br><br>
-    <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+    <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
     <table border="2">
         <tr>
             <th>Banned User</th>
@@ -1173,7 +1173,7 @@ switch (@$_GET['task']) {
         if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Cleanup</h1>
-        <div id="logo"><a href="https://github.com/tslocum/teechan"><img src="logo.png" id="logo" title="Powered by teechan"></a></div>
+        <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         Don't mess with these!
         <ul>
             <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=confirmdel">Delete entire forum</a> (XXX)

@@ -1,8 +1,8 @@
 <tr><th><%NUMPOSTS%><br><small>Add Reply</small></th>
 <th class="add"><%TEXTAREA%></th></tr></table></form>
 <p>
-<div class="foot">Powered by: <a href="https://github.com/tslocum/teechan">teechan</a>
-Version <%TEEVERSION%><br>
+<div class="foot">Powered by: <a href="https://github.com/JorgenPhi/jeechan">jeechan</a>
+Version <%JEEVERSION%><br>
 The contents of this page are asserted to be in the public domain by the
 posters.<br>The administrators claim no responsibility for thread content.
 <%ADMINLINK%></div>

@@ -18,11 +18,11 @@ $thisverysecond = time();
 
 $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
 $_POST['bbs'] ? $lol = $_POST['bbs'] : $lol = $_GET['bbs'];
-$local = @file("$lol/localsettings.txt");
-if ($local) foreach ($local as $tmp) {
-    $tmp = trim($tmp);
-    list ($name, $value) = explode("=", $tmp);
-    $setting[$name] = $value;
+$local = getBoardSettings($lol);
+if ($local) {
+    foreach ($local as $name => $value) {
+        $setting[$name] = $value;
+    }
 }
 
 // mrvacbob 04-2009

@@ -19,11 +19,9 @@ $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settin
 if ($request != '') {
     $pairs = explode('/', $request);
     $bbs = $pairs[1];
-    $local = @file("$bbs/localsettings.txt");
+    $local = getBoardSettings($bbs);
     if ($local) {
-        foreach ($local as $tmp) {
-            $tmp = trim($tmp);
-            list ($name, $value) = explode("=", $tmp);
+        foreach ($local as $name => $value) {
             $setting[$name] = $value;
         }
     }

@@ -4,11 +4,11 @@ require "includes/include.php";
 if (!$_GET['bbs']) die("Specify a BBS, please.");
 $_GET['bbs'] = htmlspecialchars($_GET['bbs']);
 $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-$local = file("{$_GET['bbs']}/localsettings.txt");
-if ($local) foreach ($local as $tmp) {
-    $tmp = trim($tmp);
-    list ($name, $value) = explode("=", $tmp);
-    $setting[$name] = $value;
+$local = getBoardSettings($_GET['bbs']);
+if ($local) {
+	foreach ($local as $name => $value) {
+    	$setting[$name] = $value;
+    }
 }
 $top = file_get_contents("includes/skin/{$setting['skin']}/boardtop.txt");
 $top = str_replace("<%POST%>", "#", $top);

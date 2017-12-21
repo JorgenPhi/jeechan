@@ -97,6 +97,48 @@ function setGlobalSettings($settings) {
     }
 }
 
+function getBoardSettings($board) {
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");
+    $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        $row = json_decode($row["value"], true);
+        if($row == null) {
+            return false; // Invalid JSON
+        }
+        return $row;
+    }
+
+    return false; // No board specific settings
+}
+
+function setBoardSettings($board, $settings) {
+    global $jee_db;
+    $settings = json_encode($settings);
+    if(!getGlobalSettings()) {
+        // Create the key
+        $stmt = $jee_db->prepare("INSERT INTO settings(name,value) VALUES(:board,:settings)");
+        $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+        $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
+        $stmt->execute();
+    } else {
+        // Update
+        $stmt = $jee_db->prepare("UPDATE settings SET value=:settings WHERE name=:board");
+        $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+        $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
+        $stmt->execute();
+    }
+}
+
+function deleteBoardSettings($board) {
+    global $jee_db;
+    $stmt = $jee_db->prepare("DELETE FROM settings WHERE name=:board LIMIT 1");
+    $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
 function linkToThread($board, $thread, $posts = '') {
     if (JEE_PRETTYURLS) {
         return 'read.php/' . $board . '/' . $thread . '/' . $posts;

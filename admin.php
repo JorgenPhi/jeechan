@@ -319,43 +319,87 @@ if(isset($_POST['action'])) {
             mkdir($_POST['boardname'] . "/dat"); // TODO
             touch($_POST['boardname'] . "/subject.txt");
             touch($_POST['boardname'] . "/head.txt");
-            $q = fopen($_POST['boardname'] . "/localsettings.txt", "w");
-            fputs($q, "boardname={$_POST['namename']}\n");
-            fclose($q);
+
+            $settings = array(
+                "boardname" => $_POST['namename']
+            );
+            setBoardSettings($_POST['boardname'], $settings);
+
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
             $setting['boardname'] = $_POST['namename'];
 
             RebuildThreadList($_POST['boardname'], 1, true, false);
             printSuccess("{$_POST['namename']} was created successfully.");
             die();
-        case "saveboardsettings": // TODO
-            if ($mylevel < 5000) fancyDie("Fnord! You don't have clearance for that.");
-            if (!$_POST['bbs']) fancyDie("No BBS specified?");
-            $fp = fopen("$_POST[bbs]/localsettings.txt", "w") or fancyDie("can't open localsettings.txt");
-            if ($_POST['forumname']) fputs($fp, "forumname=$_POST[forumname]\n");
-            if ($_POST['urltoforum']) fputs($fp, "urltoforum=$_POST[urltoforum]\n");
-            if ($_POST['boardname']) fputs($fp, "boardname=$_POST[boardname]\n");
-            if ($_POST['nameless']) fputs($fp, "nameless=$_POST[nameless]\n");
-            if ($_POST['aborn']) fputs($fp, "aborn=$_POST[aborn]\n");
-            if ($_POST['overridename']) fputs($fp, "overridename=on\nnamefield=$_POST[namefield]\n");
-            if ($_POST['overrideip']) fputs($fp, "overrideip=on\nhaship=$_POST[haship]\n");
-            if ($_POST['encoding']) fputs($fp, "encoding=$_POST[encoding]\n");
-            if ($_POST['maxres']) fputs($fp, "maxres=$_POST[maxres]\n");
-            if ($_POST['postsperpage']) fputs($fp, "postsperpage=$_POST[postsperpage]\n");
-            if ($_POST['fpthreads']) fputs($fp, "fpthreads=$_POST[fpthreads]\n");
-            if ($_POST['fplines']) fputs($fp, "fplines=$_POST[fplines]\n");
-            if ($_POST['fpposts']) fputs($fp, "fpposts=$_POST[fpposts]\n");
-            if ($_POST['posticons']) fputs($fp, "posticons=$_POST[posticons]\n");
-            if ($_POST['additionalthreads']) fputs($fp, "additionalthreads=$_POST[additionalthreads]\n");
-            if ($_POST['overrideskin']) fputs($fp, "overrideskin=on\nskin=$_POST[skin]\n");
-            if ($_POST['adminsonly']) fputs($fp, "adminsonly=$_POST[adminsonly]\n");
-            if ($_POST['neverbump']) fputs($fp, "neverbump=$_POST[neverbump]\n");
-            fclose($fp);
-            ?>
-            <link rel="stylesheet" href="admin.css"><h1>Success</h1>
-            <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
-            The settings for /<?= $_POST['bbs'] ?>/ have been updated.<p><a href="admin.php">Back to Admin Panel</a>
-            <?php exit;
+        case "saveboardsettings":
+            doesHavePermisison($mylevel, 5000);
+            if (!$_POST['bbs']) {
+                fancyDie("No BBS specified?");
+            }
+
+            $settings = array();
+
+            if ($_POST['forumname']) {
+                $settings['forumname'] = $_POST['forumname'];
+            }
+            if ($_POST['urltoforum']) {
+                $settings['urltoforum'] = $_POST['urltoforum'];
+            }
+            if ($_POST['boardname']) {
+                $settings['boardname'] = $_POST['boardname'];
+            }
+            if ($_POST['nameless']) {
+                $settings['nameless'] = $_POST['nameless'];
+            }
+            if ($_POST['aborn']) {
+                $settings['aborn'] = $_POST['aborn'];
+            }
+            if ($_POST['overridename']) {
+                $settings['overridename'] = 'on';
+                $settings['nnamefield'] = $_POST['namefield'];
+            }
+            if ($_POST['overrideip']) {
+                $settings['overrideip'] = 'on';
+                $settings['haship'] = $_POST['haship'];
+            }
+            if ($_POST['encoding']) {
+                $settings['encoding'] = $_POST['encoding'];
+            }
+            if ($_POST['maxres']) {
+                $settings['maxres'] = $_POST['maxres'];
+            }
+            if ($_POST['postsperpage']) {
+                $settings['postsperpage'] = $_POST['postsperpage'];
+            }
+            if ($_POST['fpthreads']) {
+                $settings['fpthreads'] = $_POST['fpthreads'];
+            }
+            if ($_POST['fplines']) {
+                $settings['fplines'] = $_POST['fplines'];
+            }
+            if ($_POST['fpposts']) {
+                $settings['fpposts'] = $_POST['fpposts'];
+            }
+            if ($_POST['posticons']) {
+                $settings['posticons'] = $_POST['posticons'];
+            }
+            if ($_POST['additionalthreads']) {
+                $settings['additionalthreads'] = $_POST['additionalthreads'];
+            }
+            if ($_POST['overrideskin']) {
+                $settings['overrideskin'] = 'on';
+                $settings['skin'] = $_POST['skin'];
+            }
+            if ($_POST['adminsonly']) {
+                $settings['adminsonly'] = $_POST['adminsonly'];
+            }
+            if ($_POST['neverbump']) {
+                $settings['neverbump'] = $_POST['neverbump'];
+            }
+
+            setBoardSettings($_POST['bbs'], $settings);
+            printSuccess("The settings for /{$_POST['bbs']}/ have been updated.");
+            die();
         case "writehead"; // TODO
             doesHavePermisison($mylevel, 4900);
             if (!$_POST['bbs']) {
@@ -416,11 +460,9 @@ if(isset($_POST['action'])) {
             if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
             unlink("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't delete");
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-            $local = @file("{$_POST['bbs']}/localsettings.txt");
+            $local = getBoardSettings($_POST['bbs']);
             if ($local) {
-                foreach ($local as $tmp) {
-                    $tmp = trim($tmp);
-                    list ($name, $value) = explode("=", $tmp);
+                foreach ($local as $name => $value) {
                     $setting[$name] = $value;
                 }
             }
@@ -486,7 +528,7 @@ switch (@$_GET['task']) {
             $handle = opendir('.');
             while (false !== ($file = readdir($handle))) {
                 if ($file != '.' && $file != '..') {
-                    if (is_dir("$file") && is_file("$file/localsettings.txt")) array_push($board, $file);
+                    if (is_dir("$file") && is_file("$file/index.html")) array_push($board, $file); // TODO
                 }
             }
             closedir($handle);
@@ -760,11 +802,9 @@ switch (@$_GET['task']) {
         if ($mylevel < 1000) fancyDie("You don't have clearance for that.");
 // settings file
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("{$_GET['bbs']}/localsettings.txt");
+        $local = getBoardSettings($_GET['bbs']);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }
@@ -797,7 +837,7 @@ switch (@$_GET['task']) {
         $handle = opendir('.');
         while (false !== ($file = readdir($handle))) {
             if ($file != '.' && $file != '..') {
-                if (is_dir("$file") && is_file("$file/localsettings.txt")) array_push($board, $file);
+                if (is_dir("$file") && is_file("$file/index.html")) array_push($board, $file); // TODO
             }
         }
         closedir($handle);
@@ -807,11 +847,9 @@ switch (@$_GET['task']) {
         fputs($index, $top);
         if (!$board) fputs($index, "<dt>No boards :(</dt>");
         else foreach ($board as $board_single) {
-            $local = @file("$board_single/localsettings.txt");
-            if ($local) {
-                foreach ($local as $tmp) {
-                    $tmp = trim($tmp);
-                    list ($name, $value) = explode("=", $tmp);
+        $local = getBoardSettings($board_single);
+        if ($local) {
+            foreach ($local as $name => $value) {
                     $setting[$name] = $value;
                 }
             }
@@ -848,13 +886,9 @@ switch (@$_GET['task']) {
     case "settings":
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
         if (!$_GET['bbs']) fancyDie("No BBS selected?!");
-        $local = file("{$_GET['bbs']}/localsettings.txt");
+        $local = getBoardSettings($_GET['bbs']);
         if ($local) {
-            $local = array_map("htmlspecialchars", $local);
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
-                if ($value == "on") $value = "checked";
+            foreach ($local as $name => $value) {
                 $SETTING[$name] = $value;
             }
         }
@@ -926,11 +960,9 @@ switch (@$_GET['task']) {
         $to = $_GET['ed'] or fancyDie("no end?");
 // settings file
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$bbs/localsettings.txt");
+        $local = getBoardSettings($bbs);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }
@@ -972,11 +1004,9 @@ switch (@$_GET['task']) {
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$bbs/localsettings.txt");
+        $local = getBoardSettings($bbs);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }
@@ -1001,11 +1031,9 @@ switch (@$_GET['task']) {
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$bbs/localsettings.txt");
+        $local = getBoardSettings($bbs);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }
@@ -1039,11 +1067,9 @@ switch (@$_GET['task']) {
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$bbs/localsettings.txt");
+        $local = getBoardSettings($bbs);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }
@@ -1076,11 +1102,9 @@ switch (@$_GET['task']) {
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $local = @file("$bbs/localsettings.txt");
+        $local = getBoardSettings($bbs);
         if ($local) {
-            foreach ($local as $tmp) {
-                $tmp = trim($tmp);
-                list ($name, $value) = explode("=", $tmp);
+            foreach ($local as $name => $value) {
                 $setting[$name] = $value;
             }
         }

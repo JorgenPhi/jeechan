@@ -339,61 +339,61 @@ if(isset($_POST['action'])) {
 
             $settings = array();
 
-            if ($_POST['forumname']) {
+            if (isset($_POST['forumname']) && $_POST['forumname'] != "") {
                 $settings['forumname'] = $_POST['forumname'];
             }
-            if ($_POST['urltoforum']) {
+            if (isset($_POST['urltoforum']) && $_POST['urltoforum'] != "") {
                 $settings['urltoforum'] = $_POST['urltoforum'];
             }
-            if ($_POST['boardname']) {
+            if (isset($_POST['boardname']) && $_POST['boardname'] != "") {
                 $settings['boardname'] = $_POST['boardname'];
             }
-            if ($_POST['nameless']) {
+            if (isset($_POST['nameless']) && $_POST['nameless'] != "") {
                 $settings['nameless'] = $_POST['nameless'];
             }
-            if ($_POST['aborn']) {
+            if (isset($_POST['aborn']) && $_POST['aborn'] != "") {
                 $settings['aborn'] = $_POST['aborn'];
             }
-            if ($_POST['overridename']) {
+            if (isset($_POST['overridename']) && $_POST['overridename'] != "") {
                 $settings['overridename'] = 'on';
                 $settings['nnamefield'] = $_POST['namefield'];
             }
-            if ($_POST['overrideip']) {
+            if (isset($_POST['overrideip']) && $_POST['overrideip'] != "") {
                 $settings['overrideip'] = 'on';
                 $settings['haship'] = $_POST['haship'];
             }
-            if ($_POST['encoding']) {
+            if (isset($_POST['encoding']) && $_POST['encoding'] != "") {
                 $settings['encoding'] = $_POST['encoding'];
             }
-            if ($_POST['maxres']) {
+            if (isset($_POST['maxres']) && $_POST['maxres'] != "") {
                 $settings['maxres'] = $_POST['maxres'];
             }
-            if ($_POST['postsperpage']) {
+            if (isset($_POST['postsperpage']) && $_POST['postsperpage'] != "") {
                 $settings['postsperpage'] = $_POST['postsperpage'];
             }
-            if ($_POST['fpthreads']) {
+            if (isset($_POST['fpthreads']) && $_POST['fpthreads'] != "") {
                 $settings['fpthreads'] = $_POST['fpthreads'];
             }
-            if ($_POST['fplines']) {
+            if (isset($_POST['fplines']) && $_POST['fplines'] != "") {
                 $settings['fplines'] = $_POST['fplines'];
             }
-            if ($_POST['fpposts']) {
+            if (isset($_POST['fpposts']) && $_POST['fpposts'] != "") {
                 $settings['fpposts'] = $_POST['fpposts'];
             }
-            if ($_POST['posticons']) {
+            if (isset($_POST['posticons']) && $_POST['posticons'] != "") {
                 $settings['posticons'] = $_POST['posticons'];
             }
-            if ($_POST['additionalthreads']) {
+            if (isset($_POST['additionalthreads']) && $_POST['additionalthreads'] != "") {
                 $settings['additionalthreads'] = $_POST['additionalthreads'];
             }
-            if ($_POST['overrideskin']) {
+            if (isset($_POST['overrideskin']) && $_POST['overrideskin'] != "") {
                 $settings['overrideskin'] = 'on';
                 $settings['skin'] = $_POST['skin'];
             }
-            if ($_POST['adminsonly']) {
+            if (isset($_POST['adminsonly']) && $_POST['adminsonly'] != "") {
                 $settings['adminsonly'] = $_POST['adminsonly'];
             }
-            if ($_POST['neverbump']) {
+            if (isset($_POST['neverbump']) && $_POST['neverbump'] != "") {
                 $settings['neverbump'] = $_POST['neverbump'];
             }
 
@@ -884,6 +884,7 @@ switch (@$_GET['task']) {
         </form>
         <?php exit;
     case "settings":
+        $SETTING = array();
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
         if (!$_GET['bbs']) fancyDie("No BBS selected?!");
         $local = getBoardSettings($_GET['bbs']);
@@ -899,7 +900,7 @@ switch (@$_GET['task']) {
         <b>All settings filled in here will OVERRIDE global settings.</b>
         <form action="admin.php" method="POST">
             <h2>Basic Stuff</h2>
-            <?php if ($SETTING['encoding']) echo "Your default character encoding is {$SETTING['encoding']} and it is unwise to change that.<input type='hidden' name='encoding' value='{$SETTING['encoding']}'>"; else echo "Character encoding: <select name='encoding'><option value=''>Don't override default<option value='utf8'>UTF-8 (recommended)<option value='sjis'>Shift-JIS</select> (Once you set this, you can't change it)"; ?>
+            <?php if (isset($SETTING['encoding'])) echo "Your default character encoding is {$SETTING['encoding']} and it is unwise to change that.<input type='hidden' name='encoding' value='{$SETTING['encoding']}'>"; else echo "Character encoding: <select name='encoding'><option value=''>Don't override default<option value='utf8'>UTF-8 (recommended)<option value='sjis'>Shift-JIS</select> (Once you set this, you can't change it)"; ?>
             <br>
             Skin: <select name="skin"><?php
                 $board = array();
@@ -913,34 +914,34 @@ switch (@$_GET['task']) {
                 if ($board == array()) fancyDie("</select>No skins?!");
                 foreach ($board as $tmp) {
                     $name = file_get_contents("includes/skin/$tmp/name.txt");
-                    if ($SETTING['skin'] == $tmp) echo "<option value='$tmp' selected>$name</option>";
+                    if (@$SETTING['skin'] == $tmp) echo "<option value='$tmp' selected>$name</option>";
                     else echo "<option value='$tmp'>$name</option>";
-                } ?></select> (Override?) <input name="overrideskin" <?= $SETTING['overrideskin'] ?> type="checkbox">
-            <br>Board name: <input name="boardname" value="<?= $SETTING['boardname'] ?>">
-            <br>Threads can only be started by admins? <input name="adminsonly" <?= $SETTING['adminsonly'] ?>
+                } ?></select> (Override?) <input name="overrideskin" <?= @$SETTING['overrideskin'] ?> type="checkbox">
+            <br>Board name: <input name="boardname" value="<?= @$SETTING['boardname'] ?>">
+            <br>Threads can only be started by admins? <input name="adminsonly" <?= @$SETTING['adminsonly'] ?>
                                                               type="checkbox">
-            <br>Threads are never bumped? <input name="neverbump" <?= $SETTING['neverbump'] ?>
+            <br>Threads are never bumped? <input name="neverbump" <?= @$SETTING['neverbump'] ?>
                                                               type="checkbox">
 
             <h2>Default names</h2>
-            <br>Default nickname: <input name="nameless" value="<?= $SETTING['nameless'] ?>">
-            <br>Default aborn: <input name="aborn" value="<?= $SETTING['aborn'] ?>">
+            <br>Default nickname: <input name="nameless" value="<?= @$SETTING['nameless'] ?>">
+            <br>Default aborn: <input name="aborn" value="<?= @$SETTING['aborn'] ?>">
 
             <h2>Boring things</h2>
-            Maximum number of replies: <input name="maxres" value="<?= $SETTING['maxres'] ?>" size="5">
-            <br>Hash IP and display it next to post: <input type="checkbox" name="haship" <?= $SETTING['haship'] ?>>
-            (Override?) <input name="overrideip" <?= $SETTING['overrideip'] ?> type="checkbox">
+            Maximum number of replies: <input name="maxres" value="<?= @$SETTING['maxres'] ?>" size="5">
+            <br>Hash IP and display it next to post: <input type="checkbox" name="haship" <?= @$SETTING['haship'] ?>>
+            (Override?) <input name="overrideip" <?= @$SETTING['overrideip'] ?> type="checkbox">
             <br>Add a Name field to the reply box (for use on small forums): <input type="checkbox"
-                                                                                    name="namefield" <?= $SETTING['namefield'] ?>>
-            (Override?) <input name="overridename" <?= $SETTING['overridename'] ?> type="checkbox">
-            <br>Posts per page: <input name="postsperpage" value="<?= $SETTING['postsperpage'] ?>" size="5">
-            <br>Threads displayed on front page: <input name="fpthreads" value="<?= $SETTING['fpthreads'] ?>" size="5">
+                                                                                    name="namefield" <?= @$SETTING['namefield'] ?>>
+            (Override?) <input name="overridename" <?= @$SETTING['overridename'] ?> type="checkbox">
+            <br>Posts per page: <input name="postsperpage" value="<?= @$SETTING['postsperpage'] ?>" size="5">
+            <br>Threads displayed on front page: <input name="fpthreads" value="<?= @$SETTING['fpthreads'] ?>" size="5">
             <br>Posts displayed on front page threads (not including first post): <input name="fpposts"
-                                                                                         value="<?= $SETTING['fpposts'] ?>"
+                                                                                         value="<?= @$SETTING['fpposts'] ?>"
                                                                                          size="5">
-            <br>Lines displayed on front page threads: <input name="fplines" value="<?= $SETTING['fplines'] ?>" size="5">
+            <br>Lines displayed on front page threads: <input name="fplines" value="<?= @$SETTING['fplines'] ?>" size="5">
             <br>Additional threads linked in front page table: <input name="additionalthreads"
-                                                                      value="<?= $SETTING['additionalthreads'] ?>"
+                                                                      value="<?= @$SETTING['additionalthreads'] ?>"
                                                                       size="5">
             <input type="hidden" name="action" value="saveboardsettings">
             <input type="hidden" name="bbs" value="<?= $_GET['bbs'] ?>">

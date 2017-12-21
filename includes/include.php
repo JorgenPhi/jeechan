@@ -117,7 +117,7 @@ function getBoardSettings($board) {
 function setBoardSettings($board, $settings) {
     global $jee_db;
     $settings = json_encode($settings);
-    if(!getGlobalSettings()) {
+    if(!getBoardSettings($board)) {
         // Create the key
         $stmt = $jee_db->prepare("INSERT INTO settings(name,value) VALUES(:board,:settings)");
         $stmt->bindValue(':board', $board, PDO::PARAM_STR);
@@ -585,7 +585,7 @@ function RebuildThreadList($bbs, $thisid, $sage, $rmthread) {
     $middle = str_replace("<%HEADTXT%>", file_get_contents("$bbs/head.txt") , $middle);
     fputs($f, $middle);
     for ($i = 0; $i < $setting['fpthreads']; $i++) {
-        if (!$subject[$i]) break;
+        if (!isset($subject[$i])) break;
 
         list($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $subject[$i]);
         fputs($f, PrintThread($bbs, $id, array(

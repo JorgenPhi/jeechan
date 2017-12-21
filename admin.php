@@ -185,7 +185,7 @@ if(isset($_POST['action'])) {
         case "deladmin":
     // removing an admin entirely
             doesHavePermisison($mylevel, 9500);
-            if (!$_POST['confirm']) {
+            if (!isset($_POST['confirm'])) {
                 fancyDie("You didn't confirm deletion. (Sorry, it's a safety catch.)");
             }
 
@@ -305,10 +305,10 @@ if(isset($_POST['action'])) {
             printSuccess("Unbanned successfully.");
         case "newb":
             doesHavePermisison($mylevel, 8000);
-            if (!$_POST['boardname']) {
+            if (!isset($_POST['boardname']) || $_POST['boardname'] == "") {
                 fancyDie("Every board deserves a directory.");
             }
-            if (!$_POST['namename']) {
+            if (!isset($_POST['namename']) || $_POST['namename'] == "") {
                 fancyDie("Every board deserves a name.");
             }
             if (is_dir($_POST['boardname'])) {
@@ -471,6 +471,23 @@ if(isset($_POST['action'])) {
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Thread was deleted successfully.
             <?php exit;
+        case "confirmdelbrd":
+    // removing an entire board
+            doesHavePermisison($mylevel, 8000);
+            if (!isset($_POST['confirm'])) {
+                fancyDie("You didn't confirm deletion. (Sorry, it's a safety catch.)");
+            }
+            if (!isset($_POST['bbs'])) {
+                fancyDie("no bbs?!");
+            }
+            if (!is_dir($_POST['bbs']) && !is_file("{$_POST['bbs']}/index.html")) {
+                fancyDie("not a board");
+            }
+
+            deleteBoardSettings($_POST['bbs']);
+            delete_files("./{$_POST['bbs']}/");
+            printSuccess("The board {$_POST['bbs']} was successfully deleted.");
+            die();
         default:
             break;
     }
@@ -1201,7 +1218,12 @@ switch (@$_GET['task']) {
         <div id="logo"><a href="https://github.com/JorgenPhi/jeechan"><img src="logo.png" id="logo" title="Powered by jeechan"></a></div>
         Don't mess with these!
         <ul>
-            <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=confirmdel">Delete entire forum</a> (XXX)
+             <form action='admin.php' method='POST'>
+                <input type='hidden' name='action' value='confirmdelbrd'>
+                <input type='hidden' name='bbs' value='<?= $_GET['bbs'] ?>'>
+                <input type='checkbox' name='confirm'> to confirm.
+                <input type='submit' value='Delete entire forum! (XXX)'>
+            </form>
             <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=rebuildsubj">Rebuild subject.txt</a>
         </ul>
         <?php exit;

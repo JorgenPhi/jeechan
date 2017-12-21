@@ -65,6 +65,25 @@ function fancyDie($m) {
     exit;
 }
 
+/* 
+ * php delete function that deals with directories 
+ * (c) Lewis Cowles
+ */
+function delete_files($target) {
+    if(is_dir($target)){
+        $files = glob( $target . '*', GLOB_MARK ); //GLOB_MARK adds a slash to directories returned
+        
+        foreach( $files as $file )
+        {
+            delete_files( $file );      
+        }
+      
+        rmdir( $target );
+    } elseif(is_file($target)) {
+        unlink( $target );  
+    }
+}
+
 function getGlobalSettings() {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");

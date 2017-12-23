@@ -116,6 +116,18 @@ function setGlobalSettings($settings) {
     }
 }
 
+function getBoardList() {
+    global $jee_db;
+    $boards = array();
+    $stmt = $jee_db->prepare("SELECT `name` FROM `settings` WHERE `name`!='_globalsettings' ORDER BY `name` DESC;");
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        array_push($boards, $row["name"]);
+    }
+    return $boards;
+}
+
 function getBoardSettings($board) {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");

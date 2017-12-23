@@ -323,7 +323,6 @@ if(isset($_POST['action'])) {
 
             mkdir($_POST['boardname']);
             mkdir($_POST['boardname'] . "/dat"); // TODO
-            touch($_POST['boardname'] . "/subject.txt");
             touch($_POST['boardname'] . "/head.txt");
 
             $settings = array(
@@ -419,8 +418,10 @@ if(isset($_POST['action'])) {
             printSuccess("Header file was written succesfully.");
             die();
         case "aborn": // TODO
-            if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
-            if (!is_numeric($_POST['id'])) fancyDie("no post?");
+            doesHavePermisison($mylevel, 1000);
+            if (!is_numeric($_POST['id'])) {
+                fancyDie("no post?");
+            }
             $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
             list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
             $thread[$_POST['id']] = "Aborn!<><>$date<>{$_POST['abornmesg']}<>Aborn!<>$ip";
@@ -486,7 +487,7 @@ if(isset($_POST['action'])) {
             if (!isset($_POST['bbs'])) {
                 fancyDie("no bbs?!");
             }
-            if (!is_dir($_POST['bbs']) && !is_file("{$_POST['bbs']}/index.html")) {
+            if(!getBoardSettings($_POST['bbs'])) {
                 fancyDie("not a board");
             }
 
@@ -547,14 +548,7 @@ switch (@$_GET['task']) {
         ?></ul><?php
 // Board management
         if ($mylevel >= 1000) {
-            $board = array();
-            $handle = opendir('.');
-            while (false !== ($file = readdir($handle))) {
-                if ($file != '.' && $file != '..') {
-                    if (is_dir("$file") && is_file("$file/index.html")) array_push($board, $file); // TODO
-                }
-            }
-            closedir($handle);
+            $board = getBoardList();
             if ($board == array()) echo "<h2>You haven't set up any boards :(</h2>";
             else foreach ($board as $tmp) {
                 echo "<h2>/<a href='$tmp'>$tmp</a>/ Management</h2><ul>";
@@ -856,14 +850,7 @@ switch (@$_GET['task']) {
         $index = fopen("index.html", "w");
         // global settings
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-        $board = array();
-        $handle = opendir('.');
-        while (false !== ($file = readdir($handle))) {
-            if ($file != '.' && $file != '..') {
-                if (is_dir("$file") && is_file("$file/index.html")) array_push($board, $file); // TODO
-            }
-        }
-        closedir($handle);
+        $board = getBoardList();
         $top = file_get_contents("includes/skin/{$setting['skin']}/forumstop.txt");
         $top = str_replace("<%FORUMNAME%>", $setting['forumname'], $top);
         $top = str_replace("<%FORUMURL%>", $setting['urltoforum'], $top);
@@ -1230,40 +1217,8 @@ switch (@$_GET['task']) {
                 <input type='checkbox' name='confirm'> to confirm.
                 <input type='submit' value='Delete entire forum! (XXX)'>
             </form>
-            <li><a href="admin.php?bbs=<?= $_GET['bbs'] ?>&task=rebuildsubj">Rebuild subject.txt</a>
         </ul>
         <?php exit;
-    case "rebuildsubj":
-        if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
-        $handle = opendir("{$_GET['bbs']}/dat/") or fancyDie("no board");
-        $dats = array();
-        while (false !== ($file = readdir($handle)))
-            if (strstr($file, ".dat")) array_push($dats, $file);
-        $finale = array();
-        foreach ($dats as $dat) {
-            $id = str_replace(".dat", "", $dat);
-            $munge = file("{$_GET['bbs']}/dat/$dat");
-            list($subj, $unused, $icon) = explode("<=>", $munge[0]);
-            $icon = rtrim($icon);
-            list($name, $trip, $unused, $unused, $unused, $unused) = explode("<>", $munge[1]);
-            $name ? $namae = $name : $namae = '#' . $trip;
-            $ll = count($munge) - 1;
-            list($name, $trip, $lastid, $unused, $unused, $unused) = explode("<>", $munge[$ll]);
-            $name ? $lastn = $name : $lastn = '#' . $trip;
-            $finale[$lastid] = "$subj<>$namae<>$icon<>$id<>$ll<>$lastn<>$lastid\n";
-        }
-        krsort($finale);
-        $fp = fopen("{$_GET['bbs']}/subject.txt", "w") or fancyDie("subject.txt writeerr!");
-        foreach ($finale as $unused => $line) {
-            echo "$unused<br>";
-            fwrite($fp, $line);
-        }
-        fclose($fp);
-        ?>
-        <meta http-equiv="refresh" content="1;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>">
-        Subject.txt rewritten successfully.
-        <?php
-        exit;
     case "logout":
         login(0);
 }

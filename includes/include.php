@@ -99,8 +99,18 @@ function createBoardSchema($board) {
 function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $posttime, $comment, $idcrypt, $ip) {
 
 }
+
 function getThread($board, $thread_num) {
     
+}
+
+function getSubjectTxt($board) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+
+    $stmt = $jee_db->prepare("SELECT `mg`.`title` as threadname, `mg`.`name` as author, `mg`.`capcode` as threadicon, `rt`.`thread_num` as id, `rt`.`nreplies` as replies, `rt`.`time_last_modified` as lasttime, `mg`.`trip` as trip FROM `{$board}_threads` rt LEFT JOIN `{$board}` mg ON mg.num = rt.thread_num ORDER BY rt.sticky DESC, rt.time_last_modified DESC");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_NUM);
 }
 
 function deleteBoardSchema($board) {

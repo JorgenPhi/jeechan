@@ -21,15 +21,19 @@ if ($setting['encoding'] == "sjis") $top = str_replace("<%ENCODING%>", "<META ht
 else $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'>", $top);
 echo $top;
 
-$list = @file("{$_GET['bbs']}/subject.txt");
-if (!$list) {
+if(!getBoardSettings($_GET['bbs'])) {
+    echo "<tr><td colspan='5'><p style='text-align:center; padding: 1em'>This forum does not exist.</p></td></tr>";
+    exit;
+}
+
+$list = getSubjectTxt($_GET['bbs']);
+if (!$list || $list == array()) {
     echo "<tr><td colspan='5'><p style='text-align:center; padding: 1em'>This forum has no threads in it.</p></td></tr>";
     exit;
 }
-foreach ($list as $line) {
-    list ($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $line);
+foreach ($list as $thread) {
+    list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $thread;
     $time = date("j M Y H:i", intval($lasttime));
     $icon = icons(@$i, $threadicon);
     echo "<tr><td><a href='" . linkToThread($_GET['bbs'], $id, "1-{$setting['postsperpage']}") . "'>$icon</a></td><td><a href='" . linkToThread($_GET['bbs'], $id, "l{$setting['postsperpage']}") . "'>$threadname</a></td><td>$author</td><td>$replies</td><td nowrap><small>$time</small></td></tr>";
-
 }

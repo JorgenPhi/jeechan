@@ -28,7 +28,7 @@ if ($local) {
 // mrvacbob 04-2009
 $isnewthread = false;
 if ($_POST['subj']) {
-	$_POST['id'] = $thisverysecond;
+	$_POST['id'] = null; // id is going to be the thread_num we are in
 	$isnewthread = true;
 }
 
@@ -299,7 +299,7 @@ if (!is_dir($_POST['bbs'])) fancyDie("Board specified does not exist.");
 if (!$_POST['subj'] && !is_file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("Thread ID specified does not exist.");
 if ($_POST['subj'] && is_file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("Thread has already been created.");
 
-// Tripcode mohel TODO: Encrypted trips are blocked?  Or not?
+// Tripcode mohel TODO: Encrypted trips are blocked?  Or not? -- Yes they would be because tripcode gen is done before this section :) 
 if ($_POST['name']) {
     $censorme = checkMohel($_POST['name'], $trip);
 
@@ -314,30 +314,23 @@ if ($_POST['name']) {
 if ($_POST['name'] == "" && !$trip) $_POST['name'] = $setting['nameless'];
 
 // It's time to actually write the post.
-$handle = fopen("{$_POST['bbs']}/dat/{$_POST['id']}.dat", "a") or fancyDie("Couldn't open the thread .dat file for writing!");
-$tobewritten = "{$_POST['name']}<>$trip<>$posttime<>{$_POST['mesg']}<>$idcrypt";
-$tobewritten = str_replace(array("\r\n", "\r", "\n"), "", $tobewritten); // do NOT allow linebreaks under penalty of fucking up the post!
-if ($_POST['subj']) {
-    $_POST['name'] ? $namae = $_POST['name'] : $namae = '#' . $trip;
-    fwrite($handle, "{$_POST['subj']}<=>$namae<=>{$_POST['icon']}\n");
+function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon $posttime, $comment, $idcrypt, $ip) {
+
 }
-fwrite($handle, "{$_POST['name']}<>$trip<>$thisverysecond<>{$_POST['mesg']}<>$idcrypt<>{$_SERVER['REMOTE_ADDR']}\n");
+
+if ($_POST['subj']) { // If a new post
+    addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
+} else {
+    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR'])
+}
+
+
 if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies.
     fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
-    $threadstopwhendone = true;
 }
-fclose($handle);
 
 setFloodMarker($_SERVER['REMOTE_ADDR']);
 
-if ($_POST['subj']) {
-    $handle = fopen("{$_POST['bbs']}/subject.txt", "a") or fancyDie("Couldn't open subject.txt for writing!");
-    $_POST['name'] ? $namae = $_POST['name'] : $namae = '#' . $trip;
-    fwrite($handle, "{$_POST['subj']}<>$namae<>{$_POST['icon']}<>{$_POST['id']}<>0<>$namae<>{$_POST['id']}\n");
-    fclose($handle);
-}
-
-if ($threadstopwhendone) chmod("{$_POST['bbs']}/dat/{$_POST['id']}.dat", 0440);
 RebuildThreadList($_POST['bbs'], $_POST['id'], ($setting['neverbump'] && !$isnewthread ? true : $_POST['sage']), false);
 ?>
 <html><title>Success</title>

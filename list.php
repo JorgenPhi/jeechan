@@ -15,7 +15,7 @@ $top = str_replace("<%POST%>", "#", $top);
 $top = str_replace("<%FORUMURL%>", $setting['urltoforum'], $top);
 $top = str_replace("<%BOARDURL%>", $_GET['bbs'], $top);
 $top = str_replace("<%FORUMNAME%>", $setting['forumname'], $top);
-$top = str_replace("<%BOARDNAME%>", "{$setting['boardname']}", $top);
+$top = str_replace("<%BOARDNAME%>", $setting['boardname'], $top);
 $top = str_replace("<%OPTION%>", "", $top);
 if ($setting['encoding'] == "sjis") $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important }</style>", $top);
 else $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'>", $top);

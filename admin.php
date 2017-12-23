@@ -492,8 +492,8 @@ if(isset($_POST['action'])) {
                 fancyDie("not a board");
             }
 
-            deleteBoardSettings($_POST['bbs']);
             deleteBoardSchema($_POST['boardname']);
+            deleteBoardSettings($_POST['bbs']);
             delete_files("./{$_POST['bbs']}/");
             printSuccess("The board {$_POST['bbs']} was successfully deleted.");
             die();

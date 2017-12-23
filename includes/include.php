@@ -88,7 +88,7 @@ function createBoardSchema($board) {
     global $jee_db;
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `create_thread_%%BOARD%%` (`num` INT, `timestamp` INT) BEGIN INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, `timestamp`, `timestamp`, 0, 0, 0); END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `update_thread_%%BOARD%%` (`tnum` INT, `p_timestamp` INT) BEGIN UPDATE `%%BOARD%%_threads` op SET op.time_last_modified = (COALESCE(GREATEST(op.time_last_modified, p_timestamp), op.time_op)), op.nreplies = (op.nreplies + 1) WHERE op.thread_num = tnum; END;'));
-    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `capcode` varchar(1) NOT NULL DEFAULT \'N\', `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\', `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `capcode` varchar(255) DEFAULT NULL, `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\', `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%_threads` (`thread_num` int(10) UNSIGNED NOT NULL, `time_op` int(10) UNSIGNED NOT NULL, `time_last_modified` int(10) UNSIGNED NOT NULL, `nreplies` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\') DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` ADD PRIMARY KEY (`num`), ADD KEY `thread_num_index` (`thread_num`,`num`), ADD KEY `op_index` (`op`), ADD KEY `name_trip_index` (`name`,`trip`), ADD KEY `trip_index` (`trip`), ADD KEY `poster_ip_index` (`poster_ip`), ADD KEY `timestamp_index` (`timestamp`);'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` MODIFY `num` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;'));
@@ -412,10 +412,19 @@ function deleteBan($id) {
 
 function setFloodMarker($ip) {
     global $jee_db;
-    $stmt = $jee_db->prepare("INSERT INTO `flood` VALUES (:ip, :time)");
-    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
-    $stmt->bindValue(':time', time(), PDO::PARAM_INT);
-    $stmt->execute();
+    if(!getFloodMarker($ip)) {
+        // Create the key
+        $stmt = $jee_db->prepare("INSERT INTO `flood` VALUES (:ip, :time)");
+        $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+        $stmt->bindValue(':time', time(), PDO::PARAM_INT);
+        $stmt->execute();
+    } else {
+        // Update
+        $stmt = $jee_db->prepare("UPDATE `flood` SET `time`=:time WHERE `ip`=:ip");
+        $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+        $stmt->bindValue(':time', time(), PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }
 
 function getFloodMarker($ip) {
@@ -494,7 +503,7 @@ function PrintPages($numposts, $boardname, $threadid, $postsperpage) {
     return $moot . "</span>";
 }
 
-function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
+function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     global $setting, $JEEVERSION;
     $postthing = 1;
     $postfile = file_get_contents("includes/skin/".$setting['skin']."/post.txt");
@@ -602,7 +611,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
 
 // ### shall we rewrite index.html?
 
-function RebuildThreadList($bbs, $thisid, $sage, $rmthread) {
+function RebuildThreadList($bbs, $thisid, $sage, $rmthread) { //TODO
     global $setting, $JEEVERSION;
     $subject = file("$bbs/subject.txt");
     if ($thisid != 1) {

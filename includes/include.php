@@ -407,6 +407,31 @@ function deleteBan($id) {
     $stmt->execute();
 }
 
+function setFloodMarker($ip) {
+    global $jee_db;
+    $stmt = $jee_db->prepare("INSERT INTO `flood` VALUES (:ip, :time)");
+    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->bindValue(':time', time(), PDO::PARAM_INT);
+    $stmt->execute();
+}
+
+function getFloodMarker($ip) {
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT `time` FROM `flood` WHERE ip=:ip LIMIT 1");
+    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        return $row['time'];
+    }
+
+    return false;
+}
+
+function cleanFloodMarkers() {
+    //TODO
+}
+
 /* ADMIN FUNCTIONS */
 
 function doesHavePermisison($userLevel, $reuqiredLevel) {

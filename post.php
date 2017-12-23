@@ -116,8 +116,10 @@ if ($ban = getBan($_SERVER['REMOTE_ADDR'])) {
 }
 
 // check for flood
-$file = @file_get_contents("temp/{$_SERVER['REMOTE_ADDR']}.flood");
-if ($file) if ($file + 5 > time()) fancyDie("Please wait at least 5 seconds between posts!<p>You may have recieved this message from submitting your post more than once. Don't submit it again.");
+$lasttime = getFloodMarker($_SERVER['REMOTE_ADDR']);
+if($lasttime != false && $lasttime + 5 > time()) {
+    fancyDie("Please wait at least 5 seconds between posts!<p>You may have recieved this message from submitting your post more than once. Don't submit it again.");
+}
 
 // ENT_QUOTES thingy
 function htmlspecialquotes($st) {
@@ -326,13 +328,7 @@ if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anyt
 }
 fclose($handle);
 
-if (!is_dir("temp")) {
-    mkdir("temp") or die("can't make temp dir");
-    chmod("temp", 0700);
-}
-$handle = fopen("temp/{$_SERVER['REMOTE_ADDR']}.flood", "w") or die ("can't write temp file");
-fwrite($handle, $thisverysecond);
-fclose($handle);
+setFloodMarker($_SERVER['REMOTE_ADDR']);
 
 if ($_POST['subj']) {
     $handle = fopen("{$_POST['bbs']}/subject.txt", "a") or fancyDie("Couldn't open subject.txt for writing!");

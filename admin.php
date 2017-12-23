@@ -327,6 +327,7 @@ if(isset($_POST['action'])) {
             $settings = array(
                 "boardname" => $_POST['namename']
             );
+            createBoardSchema($_POST['boardname']);
             setBoardSettings($_POST['boardname'], $settings);
 
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
@@ -492,6 +493,7 @@ if(isset($_POST['action'])) {
             }
 
             deleteBoardSettings($_POST['bbs']);
+            deleteBoardSchema($_POST['boardname']);
             delete_files("./{$_POST['bbs']}/");
             printSuccess("The board {$_POST['bbs']} was successfully deleted.");
             die();

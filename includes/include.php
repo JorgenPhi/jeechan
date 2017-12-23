@@ -98,6 +98,9 @@ function createBoardSchema($board) {
 
 function deleteBoardSchema($board) {
     global $jee_db;
+    if(!getBoardSettings($board)) {
+        fancyDie("not a board");
+    }
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP TABLE `%%BOARD%%`, `%%BOARD%%_threads`;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `create_thread_%%BOARD%%`;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `update_thread_%%BOARD%%`;'));

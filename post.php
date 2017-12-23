@@ -13,23 +13,13 @@ if (get_magic_quotes_gpc()) $_POST = array_map("stripslashes", $_POST);
 $_POST = array_map("htmlspecialquotes", $_POST);
 $_COOKIE = array_map("htmlspecialquotes", $_COOKIE);
 
-// Generate the date
-$thisverysecond = time();
-
 $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
-$_POST['bbs'] ? $lol = $_POST['bbs'] : $lol = $_GET['bbs'];
+isset($_POST['bbs']) ? $lol = $_POST['bbs'] : $lol = $_GET['bbs'];
 $local = getBoardSettings($lol);
 if ($local) {
     foreach ($local as $name => $value) {
         $setting[$name] = $value;
     }
-}
-
-// mrvacbob 04-2009
-$isnewthread = false;
-if ($_POST['subj']) {
-	$_POST['id'] = null; // id is going to be the thread_num we are in
-	$isnewthread = true;
 }
 
 // If we're getting called to write a post, go for it.
@@ -64,18 +54,31 @@ if (isset($_GET['shiichan']) && $_GET['shiichan'] == "writenew") {
             }
         }
         closedir($handle);
-    } else $icons = "<input type='hidden' name='icon' value='noicon.png'>Posticons are disabled.";
+    } else {
+        $icons = "<input type='hidden' name='icon' value='noicon.png'>Posticons are disabled.";
+    }
+
     $html = file_get_contents("includes/skin/{$setting['skin']}/addthread.txt");
-    $html = str_replace("<%THREADNAME%>", $threadname, $html);
-    if ($setting['encoding'] == "sjis") $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important } </style>", $html);
-    else $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'>", $html);
+    if ($setting['encoding'] == "sjis") {
+        $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important } </style>", $html);
+    } else {
+        $html = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'>", $html);
+    }
     $html = str_replace("<%FORUMURL%>", $setting['urltoforum'], $html);
     $html = str_replace("<%POSTICONS%>", $icons, $html);
     $html = str_replace("<%FORUMNAME%>", $setting['forumname'], $html);
     $html = str_replace("<%BOARDNAME%>", $setting['boardname'], $html);
     $html = str_replace("<%BOARDURL%>", $_GET['bbs'], $html);
-    if ($_COOKIE['jeeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
-    if ($setting['adminsonly']) $html = str_replace("<%ADMINSONLY%>", "<h2 style='background:none;color:red'>Only administrators can post threads to this forum!</h2>", $html); else $html = str_replace("<%ADMINSONLY%>", "", $html);
+    if (isset($_COOKIE['jeeaccname'])) {
+        $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html);
+    } else {
+        $html = str_replace("<%NAMECOOKIE%>", "", $html);
+    }
+    if (isset($setting['adminsonly'])) {
+        $html = str_replace("<%ADMINSONLY%>", "<h2 style='background:none;color:red'>Only administrators can post threads to this forum!</h2>", $html);
+    } else {
+        $html = str_replace("<%ADMINSONLY%>", "", $html);
+    }
     $html = str_replace("<%STARTFORM%>", "<form name='post' action='post.php' method='POST'><input type='hidden' name='bbs' value='{$_GET['bbs']}'><input type='hidden' name='id' value='$second'><input type='hidden' name='shiichan' value='proper'>", $html);
     $html = str_replace("<%TEXTAREA%>", "<textarea rows='15' cols='75' name='mesg'></textarea><br><input type='submit' value='Create Thread'>", $html);
     echo $html;
@@ -87,8 +90,16 @@ if (isset($_GET['id'])) {
     $thread = file("{$_GET['bbs']}/dat/{$_GET['id']}.dat") or fancyDie("Couldn't open that thread");
     list ($threadname, $author, $lastposted) = explode("<=>", $thread[0]);
     $html = file_get_contents("includes/skin/{$setting['skin']}/addreply.txt");
-    if ($_COOKIE['jeeaccname']) $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); else $html = str_replace("<%NAMECOOKIE%>", "", $html);
-    if (!is_writable("{$_GET['bbs']}/dat/{$_GET['id']}.dat")) $html = str_replace("<%THREADSTOPPED%>", "<h3>This thread is threadstopped!!</h3>", $html); else $html = str_replace("<%THREADSTOPPED%>", "", $html);
+    if (isset($_COOKIE['jeeaccname'])) {
+        $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); 
+    } else {
+        $html = str_replace("<%NAMECOOKIE%>", "", $html);
+    }
+    if (!is_writable("{$_GET['bbs']}/dat/{$_GET['id']}.dat")) {
+        $html = str_replace("<%THREADSTOPPED%>", "<h3>This thread is threadstopped!!</h3>", $html); 
+    } else {
+        $html = str_replace("<%THREADSTOPPED%>", "", $html);
+    }
     $html = str_replace("<%THREADNAME%>", $threadname, $html);
     $html = str_replace("<%FORUMNAME%>", $setting['forumname'], $html);
     $html = str_replace("<%BOARDURL%>", $_GET['bbs'], $html);
@@ -109,6 +120,20 @@ if (isset($_GET['id'])) {
 ###########################
 // AND AWAYYYY WE GOOO!!!!
 
+// Check for POST and no in-forums spoofing
+if ($_SERVER['REQUEST_METHOD'] != "POST") {
+    fancyDie("Trying to GET post.php?<meta http-equiv='refresh' content='0;url=.'>");
+}
+
+// Generate the date
+$thisverysecond = time();
+
+// mrvacbob 04-2009
+$isnewthread = false;
+if (isset($_POST['subj'])) {
+    $_POST['id'] = null; // id is going to be the thread_num we are in
+    $isnewthread = true;
+}
 
 // check for ban
 if ($ban = getBan($_SERVER['REMOTE_ADDR'])) {
@@ -146,10 +171,6 @@ function shorten($str){
  return $short_string;
 }*/
 
-// Check for POST and no in-forums spoofing
-if ($_SERVER['REQUEST_METHOD'] != "POST") {
-    fancyDie("Trying to GET post.php?<meta http-equiv='refresh' content='0;url=.'>");
-}
 
 // for capcode functions
 $threadstopwhendone = false;
@@ -178,7 +199,7 @@ if ($_POST['pass']) {
     $idcrypt = "<b>(capped)</b> ";
 
     if (intval($account['level'] < 7500 && $setting['adminsonly'] && $_POST['subj'])) fancyDie("You need a userlevel of 7500 to start a thread."); // admins-only threads...
-    if (!$_POST['subj'] && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) {
+    if (!$isnewthread && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) {
         if (intval($account['level']) < 6500) {
             fancyDie("You need a userlevel of 6500 to reply to this thread.");
         }
@@ -225,9 +246,12 @@ if ($_POST['pass']) {
 
     if (strlen($_POST['name']) > 30) fancyDie("Your name is too damn long!");
 // Certain things can only be done by admins.
-    if (strstr($_POST['icon'], "..")) fancyDie("When I say 'for admins only' I mean 'for admins only'!"); // admins-only icons...
-    if ($setting['adminsonly'] && $_POST['subj']) fancyDie("When I say 'for admins only' I mean 'for admins only'!"); // admins-only threads...
-    if (!$_POST['subj'] && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("You're not allowed to reply to this thread.<br>If you're making a new thread, <b>try entering a subject for it</b> DQN."); // threadstops
+    if(isset($_POST['icon'])) {
+        if (strstr($_POST['icon'], "..")) fancyDie("When I say 'for admins only' I mean 'for admins only'!"); // admins-only icons...
+    }
+    if (isset($setting['adminsonly']) && $isnewthread) fancyDie("When I say 'for admins only' I mean 'for admins only'!"); // admins-only threads...
+    if ($isnewthread && trim($_POST['subj']) == "") fancyDie("New threads must have a subject!"); // OP posts need a subject
+    if (!$isnewthread && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("You're not allowed to reply to this thread.<br>If you're making a new thread, <b>try entering a subject for it</b> DQN."); // threadstops
 } // End of non-capcodes-only section ####
 ##########################################
 
@@ -237,9 +261,15 @@ $al_thread = $_POST['id'];
 $_POST['mesg'] = anchorLink($_POST['mesg']);
 
 // linebreaks
-$_POST['name'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['name']);
-$_POST['subj'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['subj']);
-$_POST['icon'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['icon']);
+if(isset($_POST['name'])) {
+    $_POST['name'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['name']);
+}
+if(isset($_POST['subj'])) {
+    $_POST['subj'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['subj']);
+}
+if(isset($_POST['icon'])) {
+    $_POST['icon'] = str_replace(array("\r\n", "\r", "\n"), " ", $_POST['icon']);
+}
 
 // URL replace
 function auto_url($txt) {
@@ -281,10 +311,10 @@ $_POST['mesg'] = str_replace(array("\r\n", "\r", "\n"), "", $_POST['mesg']);
 // shiichan check
 if ($_POST['shiichan'] != "proper") fancyDie("Whoever told you to click here is a mean person. Please tell them off.");
 
-if ($_POST['subj']) {
-    $_POST['sage'] = "";
+if ($isnewthread) {
+    $_POST['sage'] = ""; // TODO: LOL I destroyed sage. I'll fix it later
 }
-if ($_POST['sage']) $idcrypt .= "(sage)";
+if (isset($_POST['sage']) && trim($_POST['sage']) != "") $idcrypt .= "(sage)";
 
 // Length checks
 if (strlen($_POST['mesg']) == 0) fancyDie("You didn't write a post?!");
@@ -293,11 +323,10 @@ if (strlen($_POST['subj']) > 45) fancyDie("Subject is too long!");
 if (count(explode("<br>", $_POST['mesg'])) > 100) fancyDie("Your post has far too many lines in it!");
 
 // check for ID and board
-if (!$_POST['bbs']) fancyDie("No board specified to post to!");
-if (!$_POST['id']) fancyDie("No thread ID specified to post to!");
+if (!isset($_POST['bbs'])) fancyDie("No board specified to post to!");
+if (!isset($_POST['id'])) fancyDie("No thread ID specified to post to!");
 if (!is_dir($_POST['bbs'])) fancyDie("Board specified does not exist.");
-if (!$_POST['subj'] && !is_file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("Thread ID specified does not exist.");
-if ($_POST['subj'] && is_file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("Thread has already been created.");
+if (!$isnewthread && !getThread($_POST['bbs'], $_POST['id'])) fancyDie("Thread ID specified does not exist.");
 
 // Tripcode mohel TODO: Encrypted trips are blocked?  Or not? -- Yes they would be because tripcode gen is done before this section :) 
 if ($_POST['name']) {
@@ -314,22 +343,19 @@ if ($_POST['name']) {
 if ($_POST['name'] == "" && !$trip) $_POST['name'] = $setting['nameless'];
 
 // It's time to actually write the post.
-function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon $posttime, $comment, $idcrypt, $ip) {
 
-}
-
-if ($_POST['subj']) { // If a new post
+if ($isnewthread) { // If a new post
     addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
 } else {
-    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR'])
-}
-
-
-if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies.
-    fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
+    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
 }
 
 setFloodMarker($_SERVER['REMOTE_ADDR']);
+
+/*if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies. //TODO
+    fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
+}*/
+
 
 RebuildThreadList($_POST['bbs'], $_POST['id'], ($setting['neverbump'] && !$isnewthread ? true : $_POST['sage']), false);
 ?>

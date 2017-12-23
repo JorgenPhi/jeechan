@@ -96,6 +96,13 @@ function createBoardSchema($board) {
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TRIGGER `after_ins_%%BOARD%%` AFTER INSERT ON `%%BOARD%%` FOR EACH ROW BEGIN IF NEW.op = 1 THEN CALL create_thread_%%BOARD%%(NEW.num, NEW.timestamp); END IF; CALL update_thread_%%BOARD%%(NEW.thread_num, NEW.timestamp); END;'));
 }
 
+function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $posttime, $comment, $idcrypt, $ip) {
+
+}
+function getThread($board, $thread_num) {
+    
+}
+
 function deleteBoardSchema($board) {
     global $jee_db;
     if(!getBoardSettings($board)) {

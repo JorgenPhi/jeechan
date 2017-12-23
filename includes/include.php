@@ -84,6 +84,25 @@ function delete_files($target) {
     }
 }
 
+function createBoardSchema($board) {
+    global $jee_db;
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `create_thread_%%BOARD%%` (`num` INT, `timestamp` INT) BEGIN INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, `timestamp`, `timestamp`, 0, 0, 0); END;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `update_thread_%%BOARD%%` (`tnum` INT, `p_timestamp` INT) BEGIN UPDATE `%%BOARD%%_threads` op SET op.time_last_modified = (COALESCE(GREATEST(op.time_last_modified, p_timestamp), op.time_op)), op.nreplies = (op.nreplies + 1) WHERE op.thread_num = tnum; END;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `capcode` varchar(1) NOT NULL DEFAULT \'N\', `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\', `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%_threads` (`thread_num` int(10) UNSIGNED NOT NULL, `time_op` int(10) UNSIGNED NOT NULL, `time_last_modified` int(10) UNSIGNED NOT NULL, `nreplies` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\') DEFAULT CHARSET=utf8mb4;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` ADD PRIMARY KEY (`num`), ADD KEY `thread_num_index` (`thread_num`,`num`), ADD KEY `op_index` (`op`), ADD KEY `name_trip_index` (`name`,`trip`), ADD KEY `trip_index` (`trip`), ADD KEY `poster_ip_index` (`poster_ip`), ADD KEY `timestamp_index` (`timestamp`);'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` MODIFY `num` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%_threads` ADD PRIMARY KEY (`thread_num`), ADD KEY `time_op_index` (`time_op`), ADD KEY `time_last_modified_index` (`time_last_modified`), ADD KEY `sticky_index` (`sticky`), ADD KEY `locked_index` (`locked`);'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TRIGGER `after_ins_%%BOARD%%` AFTER INSERT ON `%%BOARD%%` FOR EACH ROW BEGIN IF NEW.op = 1 THEN CALL create_thread_%%BOARD%%(NEW.num, NEW.timestamp); END IF; CALL update_thread_%%BOARD%%(NEW.thread_num, NEW.timestamp); END;'));
+}
+
+function deleteBoardSchema($board) {
+    global $jee_db;
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP TABLE `%%BOARD%%`, `%%BOARD%%_threads`;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `create_thread_%%BOARD%%`;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `update_thread_%%BOARD%%`;'));
+}
+
 function getGlobalSettings() {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");

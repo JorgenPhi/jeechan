@@ -86,6 +86,7 @@ function delete_files($target) {
 
 function createBoardSchema($board) {
     global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `create_thread_%%BOARD%%` (`num` INT, `timestamp` INT) BEGIN INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, `timestamp`, `timestamp`, 0, 0, 0); END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `update_thread_%%BOARD%%` (`tnum` INT, `p_timestamp` INT) BEGIN UPDATE `%%BOARD%%_threads` op SET op.time_last_modified = (COALESCE(GREATEST(op.time_last_modified, p_timestamp), op.time_op)), op.nreplies = (op.nreplies + 1) WHERE op.thread_num = tnum; END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `capcode` varchar(255) DEFAULT NULL, `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\', `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
@@ -118,6 +119,7 @@ function deleteBoardSchema($board) {
     if(!getBoardSettings($board)) {
         fancyDie("not a board");
     }
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP TABLE `%%BOARD%%`, `%%BOARD%%_threads`;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `create_thread_%%BOARD%%`;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'DROP PROCEDURE IF EXISTS `update_thread_%%BOARD%%`;'));
@@ -169,7 +171,7 @@ function getBoardList() {
 
 function getBoardHead($board) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT `head` FROM `settings` WHERE `name`=:board LIMIT 1");
     $stmt->bindValue(':board', $board, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

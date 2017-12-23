@@ -2,14 +2,17 @@
 
 require "includes/include.php";
 
-if ($_SERVER['REQUEST_METHOD'] != 'GET') fancyDie('I POSTed your mom in the ass last night.');
+if ($_SERVER['REQUEST_METHOD'] != 'GET') {
+    fancyDie('I POSTed your mom in the ass last night.');
+}
 
 if (isset($_GET['b']) && isset($_GET['t'])) {
     $request = 'read.php/' . (isset($_GET['b']) ? $_GET['b'] : '') . '/' . (isset($_GET['t']) ? $_GET['t'] : '') . '/' . (isset($_GET['p']) ? $_GET['p'] : '');
 } else {
     $file_pos = strrpos($_SERVER['REQUEST_URI'], 'read.php');
-    if ($file_pos === false) fancyDie('Unable to read your request!');
-
+    if ($file_pos === false) {
+        fancyDie('Unable to read your request!');
+    }
     $request = substr($_SERVER['REQUEST_URI'], $file_pos);
 }
 
@@ -37,9 +40,12 @@ if ($request != '') {
 
 
 // some errors
-if (!$bbs) fancyDie("You didn't specify a BBS.");
-if (!$key) fancyDie("You didn't specify a thread to read.");
-if (!file_exists("$bbs/dat/$key.dat")) fancyDie('That thread or board does not exist.');
+if (!$bbs) {
+    fancyDie("You didn't specify a BBS.");
+}
+if (!$key) {
+    fancyDie("You didn't specify a thread to read.");
+}
 
 // go for it!
 echo PrintThread($bbs, $key, $posts, true);

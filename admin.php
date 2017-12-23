@@ -898,7 +898,7 @@ switch (@$_GET['task']) {
     case "settings":
         $SETTING = array();
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
-        if (!isset($_GET['bbs']) || !getBoardSettings($_POST['bbs'])) fancyDie("No BBS selected?!");
+        if (!isset($_GET['bbs']) || !getBoardSettings($_GET['bbs'])) fancyDie("No BBS selected?!");
         $local = getBoardSettings($_GET['bbs']);
         if ($local) {
             foreach ($local as $name => $value) {
@@ -961,8 +961,8 @@ switch (@$_GET['task']) {
             <p><input type="submit" value="Save Settings">
 
             <h2>Settings it would be unwise to override</h2>
-            Global forum name: <input name="forumname" value="<?= $SETTING['forumname'] ?>" size="50">
-            <br>URL to forum: <input name="urltoforum" value="<?= $SETTING['urltoforum'] ?>" size="50">
+            Global forum name: <input name="forumname" value="<?= @$SETTING['forumname'] ?>" size="50">
+            <br>URL to forum: <input name="urltoforum" value="<?= @$SETTING['urltoforum'] ?>" size="50">
         </form>
         <?php exit;
     case "manage":

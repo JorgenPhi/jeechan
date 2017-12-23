@@ -323,7 +323,6 @@ if(isset($_POST['action'])) {
 
             mkdir($_POST['boardname']);
             mkdir($_POST['boardname'] . "/dat"); // TODO
-            touch($_POST['boardname'] . "/head.txt");
 
             $settings = array(
                 "boardname" => $_POST['namename']
@@ -338,7 +337,7 @@ if(isset($_POST['action'])) {
             die();
         case "saveboardsettings":
             doesHavePermisison($mylevel, 5000);
-            if (!$_POST['bbs']) {
+            if (!isset($_POST['bbs']) || !getBoardSettings($_POST['bbs'])) {
                 fancyDie("No BBS specified?");
             }
 
@@ -405,15 +404,13 @@ if(isset($_POST['action'])) {
             setBoardSettings($_POST['bbs'], $settings);
             printSuccess("The settings for /{$_POST['bbs']}/ have been updated.");
             die();
-        case "writehead"; // TODO
+        case "writehead";
             doesHavePermisison($mylevel, 4900);
-            if (!isset($_POST['bbs'])) {
+            if (!isset($_POST['bbs']) || !getBoardSettings($_POST['bbs'])) {
                 fancyDie("no bbs?!");
             }
 
-            $fp = fopen("{$_POST['bbs']}/head.txt", "w") or fancyDie("Couldn't open the file");
-            fwrite($fp, $_POST['file']);
-            fclose($fp);
+            setBoardHead($_POST['bbs'], $_POST['file']);
 
             printSuccess("Header file was written succesfully.");
             die();
@@ -421,6 +418,9 @@ if(isset($_POST['action'])) {
             doesHavePermisison($mylevel, 1000);
             if (!is_numeric($_POST['id'])) {
                 fancyDie("no post?");
+            }
+            if(!getBoardSettings($_POST['bbs'])) {
+                fancyDie("Invalid board");
             }
             $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
             list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
@@ -484,7 +484,7 @@ if(isset($_POST['action'])) {
             if (!isset($_POST['confirm'])) {
                 fancyDie("You didn't confirm deletion. (Sorry, it's a safety catch.)");
             }
-            if (!isset($_POST['bbs'])) {
+            if (!isset($_POST['bbs']) || !getBoardSettings($_POST['bbs'])) {
                 fancyDie("no bbs?!");
             }
             if(!getBoardSettings($_POST['bbs'])) {
@@ -864,7 +864,7 @@ switch (@$_GET['task']) {
                 }
             }
             fputs($index, "<dt><a href='$board_single'>{$setting['boardname']}</a><dd>");
-            fputs($index, file_get_contents("$board_single/head.txt"));
+            fputs($index, getBoardHead($board_single));
         }
         $bottom = file_get_contents("includes/skin/{$setting['skin']}/forumsbottom.txt");
         $bottom = str_replace("<%JEEVERSION%>", $JEEVERSION, $bottom);
@@ -889,14 +889,14 @@ switch (@$_GET['task']) {
         <form action="admin.php" method="POST">
             <input type="hidden" name="action" value="writehead">
             <input type="hidden" name="bbs" value="<?= $_GET['bbs'] ?>">
-            <textarea rows="20" cols="80" name="file"><?php @readfile("{$_GET['bbs']}/head.txt"); ?></textarea><br>
+            <textarea rows="20" cols="80" name="file"><?php getBoardHead($_GET['bbs']); ?></textarea><br>
             <input type="submit" value="Save settings">
         </form>
         <?php exit;
     case "settings":
         $SETTING = array();
         if ($mylevel < 5000) fancyDie("You don't have clearance for that.");
-        if (!$_GET['bbs']) fancyDie("No BBS selected?!");
+        if (!isset($_GET['bbs']) || !getBoardSettings($_POST['bbs'])) fancyDie("No BBS selected?!");
         $local = getBoardSettings($_GET['bbs']);
         if ($local) {
             foreach ($local as $name => $value) {
@@ -1204,7 +1204,7 @@ switch (@$_GET['task']) {
     </table>
     <?php exit;
     case "cleanup":
-        if (!$_GET['bbs']) fancyDie("no bbs?");
+        if (!isset($_GET['bbs']) || !getBoardSettings($_POST['bbs'])) fancyDie("no bbs?");
         if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Cleanup</h1>

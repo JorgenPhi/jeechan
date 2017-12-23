@@ -128,6 +128,31 @@ function getBoardList() {
     return $boards;
 }
 
+function getBoardHead($board) {
+    global $jee_db;
+    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");
+    $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($rows as $row) {
+        if($row["head"] == null) {
+            return ""; // Not set
+        }
+        return $row["head"];
+    }
+
+    return false;
+}
+
+function setBoardHead($board, $head) {
+    global $jee_db;
+    $settings = json_encode($settings);
+    $stmt = $jee_db->prepare("UPDATE settings SET head=:head WHERE name=:board");
+    $stmt->bindValue(':board', $board, PDO::PARAM_STR);
+    $stmt->bindValue(':head', $head, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
 function getBoardSettings($board) {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");
@@ -613,7 +638,7 @@ function RebuildThreadList($bbs, $thisid, $sage, $rmthread) {
 
     $middle = file_get_contents("includes/skin/".$setting['skin']."/boardmiddle.txt");
     $middle = str_replace("<%BOARDURL%>", $bbs, $middle);
-    $middle = str_replace("<%HEADTXT%>", file_get_contents("$bbs/head.txt") , $middle);
+    $middle = str_replace("<%HEADTXT%>", getBoardHead($bbs) , $middle);
     fputs($f, $middle);
     for ($i = 0; $i < $setting['fpthreads']; $i++) {
         if (!isset($subject[$i])) break;

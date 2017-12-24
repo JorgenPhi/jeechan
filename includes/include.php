@@ -121,8 +121,22 @@ function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $po
     $stmt->execute();
 }
 
-function getThread($board, $thread_num) {
-    
+function getThreadDat($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+
+    $stmt = $jee_db->prepare("SELECT `title` as threadname, `name` as author, `icon` as `threadicon`FROM `{$board}` WHERE `num` = :thread_num");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+    $header = $stmt->fetchAll(PDO::FETCH_NUM);
+
+    $stmt = $jee_db->prepare("SELECT `name`, `trip`, `timestamp` as `date`, `comment` as message, `num` as id, `poster_ip` as ip FROM `{$board}` WHERE `num` = :thread_num OR `thread_num` = :thread_num2 ORDER BY num ASC");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->bindValue(':thread_num2', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+    $posts = $stmt->fetchAll(PDO::FETCH_NUM);
+
+    return (array_merge($header,$posts));
 }
 
 function getThreadName($board, $thread_num) {
@@ -588,7 +602,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     global $setting, $JEEVERSION;
     $postthing = 1;
     $postfile = file_get_contents("includes/skin/".$setting['skin']."/post.txt");
-    $thread = file("$boardname/dat/$threadid.dat");
+    $thread = getThreadDat($boardname, $threadid);
     $numposts = count($thread) - 1;
     if (!$isitreadphp) {
         $postthing = $threadid;
@@ -600,7 +614,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
         );
     }
 
-    list($threadname, $author, $threadicon) = explode("<=>", $thread[0]);
+    list($threadname, $author, $threadicon) = $thread[0];
     if ($isitreadphp) {
         $top = file_get_contents("includes/skin/".$setting['skin']."/threadtop.txt");
         if (file_exists("option.txt")) $option = "<div class='option'>" . file_get_contents("option.txt") . "</div>";
@@ -628,7 +642,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     // Always show the first post on the front page.
 
     if (!$isitreadphp && $start != 1) {
-        list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[1]);
+        list($name, $trip, $date, $message, $id, $ip) = $thread[1];
         if ($trip) $trip = "#" . $trip;
         if ($isitreadphp) $return.= PrintPost(1, $name, $trip, $date, $id, $message, $postfile, 1, $boardname);
         else $return.= PrintPost(1, $name, $trip, $date, $id, $message, $postfile, $threadid, $boardname);
@@ -656,7 +670,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
         if ($start > $numposts) $start = $numposts;
         if ($start <= $end) {
             for ($i = $start; $i <= $end; $i++) {
-                list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$i]);
+                list($name, $trip, $date, $message, $id, $ip) = $thread[$i];
                 if ($trip) $trip = "#" . $trip;
                 if ($isitreadphp) $return.= PrintPost($i, $name, $trip, $date, $id, $message, $postfile, 1, $boardname);
                 else $return.= PrintPost($i, $name, $trip, $date, $id, $message, $postfile, $threadid, $boardname);
@@ -666,7 +680,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
             for ($i = $start; $i >= $end; $i--) {
                 if ($end < 1) $end = 1;
                 if ($start > $numposts) $start = $numposts;
-                list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$i]);
+                list($name, $trip, $date, $message, $id, $ip) = $thread[$i];
                 if ($trip) $trip = "#" . $trip;
                 if ($isitreadphp) $return.= PrintPost($i, $name, $trip, $date, $id, $message, $postfile, 1, $boardname);
                 else $return.= PrintPost($i, $name, $trip, $date, $id, $message, $postfile, $threadid, $boardname);

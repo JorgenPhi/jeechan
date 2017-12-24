@@ -155,7 +155,7 @@ $loggedin = false;
 
 ###################
 // capcode post
-if ($_POST['pass']) {
+if (isset($_POST['pass']) && trim($_POST['pass']) != "") {
     $account = checkCredentials($_POST['name'], $_POST['pass']);
     if (is_array($account)) {
         $loggedin = true;
@@ -186,7 +186,7 @@ if ($_POST['pass']) {
 //////////////////// non-capcodes area
 // str_replaces
     $_POST['mesg'] = str_replace("shiichan=proper", " lol what ", $_POST['mesg']);
-    $_POST['name'] = str_replace(array("﹟", "＃", "♯"), "#", $_POST['name']); //  Unicode spoofs for tripcodes and capcodes
+    @$_POST['name'] = str_replace(array("﹟", "＃", "♯"), "#", $_POST['name']); //  Unicode spoofs for tripcodes and capcodes
 
 // ID hash 
     $idcrypt = " ";
@@ -335,7 +335,7 @@ setFloodMarker($_SERVER['REMOTE_ADDR']);
     lockThread($_POST['bbs'], $_POST['id']);
 }*/
 
-RebuildThreadList($_POST['bbs']));
+RebuildThreadList($_POST['bbs']);
 ?>
 <html><title>Success</title>
     <meta http-equiv='refresh' content='1;url=<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>

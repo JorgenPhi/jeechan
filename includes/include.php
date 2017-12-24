@@ -694,52 +694,29 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
 
 function RebuildThreadList($bbs, $thisid, $sage, $rmthread) { //TODO
     global $setting, $JEEVERSION;
-    $subject = file("$bbs/subject.txt");
-    if ($thisid != 1) {
-        global $_POST, $thisverysecond;
-        while (list($value, $line) = each($subject)) {
-            list($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $line);
-            if ($id == $thisid) {
-                $slice1 = array_slice($subject, 0, $value);
-                $slice2 = array_slice($subject, $value + 1, count($subject));
-                $replies = count(file("$bbs/dat/$thisid.dat")) - 1;
-                if (!$sage or !$slice1) {
-                    $subject = array_merge($slice1, $slice2);
-                    if (!$rmthread) array_unshift($subject, "$threadname<>$author<>$threadicon<>$id<>$replies<>".$_POST['name']."<>$thisverysecond\n");
-                    break;
-                }
-                else {
-                    if (!$rmthread) array_push($slice1, "$threadname<>$author<>$threadicon<>$id<>$replies<>".$_POST['name']."<>$thisverysecond\n");
-                    $subject = array_merge($slice1, $slice2);
-                    break;
-                }
-            }
-        }
-
-        $f = fopen("$bbs/subject.txt", "w") or die("couldn't write to subject.txt");
-        foreach($subject as $line) fwrite($f, $line);
-        fclose($f);
-    }
-
+    $subject = getSubjectTxt($bbs);
     $f = fopen("$bbs/index.html", "w") or die("couldn't write to index.html");
-    if (file_exists("option.txt")) $option = "<div class='option'>" . file_get_contents("option.txt") . "</div>";
-    else $option = "";
     $top = file_get_contents("includes/skin/".$setting['skin']."/boardtop.txt");
     $top = str_replace("<%POST%>", "<form action='post.php'><input type='hidden' name='shiichan' value='writenew'><input type='hidden' name='bbs' value='$bbs'><input type='submit' value='New Thread'></form>", $top);
     $top = str_replace("<%FORUMURL%>", $setting['urltoforum'], $top);
     $top = str_replace("<%BOARDURL%>", $bbs, $top);
     $top = str_replace("<%FORUMNAME%>", $setting['forumname'], $top);
     $top = str_replace("<%BOARDNAME%>", $setting['boardname'], $top);
-    $top = str_replace("<%OPTION%>", $option, $top);
-    if ($setting['encoding'] == "sjis") $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important }" . abbc_css() . "</style>", $top);
-    else $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'><style>" . abbc_css() . "</style>", $top);
+    $top = str_replace("<%OPTION%>", "", $top);
+    if ($setting['encoding'] == "sjis") {
+        $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=Shift_JIS'><style>* { font-family: Mona,'MS PGothic' !important }" . abbc_css() . "</style>", $top);
+    } else {
+        $top = str_replace("<%ENCODING%>", "<META http-equiv='Content-Type' content='text/html; charset=UTF-8'><style>" . abbc_css() . "</style>", $top);
+    }
     fputs($f, $top);
-    if (!$subject) fputs($f, "<tr><td colspan='5'><p style='text-align:center; padding: 1em'>This forum has no threads in it.</p></td></tr>");
-    else {
+    if ($subject  == array()) {
+        fputs($f, "<tr><td colspan='5'><p style='text-align:center; padding: 1em'>This forum has no threads in it.</p></td></tr>");
+    } else {
         for ($i = 0; $i < $setting['fpthreads']; $i++) {
-            if (!$subject[$i]) break;
-
-            list($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $subject[$i]);
+            if (!isset($subject[$i])) {
+                break;
+            }
+            list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $subject[$i];
             $time = date("y/m/d(D)H:i:s", $lasttime);
             $icon = icons($i, $threadicon);
             $pages = ceil($replies / $setting['postsperpage']);
@@ -764,9 +741,10 @@ function RebuildThreadList($bbs, $thisid, $sage, $rmthread) { //TODO
         }
 
         for ($i = $setting['fpthreads']; $i < $setting['fpthreads'] + $setting['additionalthreads']; $i++) {
-            if (!$subject[$i]) break;
-
-            list($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $subject[$i]);
+            if (!isset($subject[$i])) {
+                break;
+            }
+            list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $subject[$i];
             $time = date("y/m/d(D)H:i:s", $lasttime);
             $icon = icons($i, $threadicon);
             fputs($f, "<tr><td><a href='" . linkToThread($bbs, $id, "1-{".$setting['postsperpage']."}") . "'>$icon</a></td><td><a href='" . linkToThread($bbs, $id, "l{".$setting['postsperpage']."}") . "'>$threadname</a></td><td>$author</td><td>$replies</td><td nowrap><small>$time</small></td></tr>");
@@ -780,7 +758,7 @@ function RebuildThreadList($bbs, $thisid, $sage, $rmthread) { //TODO
     for ($i = 0; $i < $setting['fpthreads']; $i++) {
         if (!isset($subject[$i])) break;
 
-        list($threadname, $author, $threadicon, $id, $replies, $last, $lasttime) = explode("<>", $subject[$i]);
+        list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $subject[$i];
         fputs($f, PrintThread($bbs, $id, array(
             "0"
         ) , false));

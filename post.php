@@ -172,7 +172,6 @@ function shorten($str){
 
 
 // for capcode functions
-$threadstopwhendone = false;
 $loggedin = false;
 
 ###################
@@ -202,7 +201,6 @@ if ($_POST['pass']) {
         if (intval($account['level']) < 6500) {
             fancyDie("You need a userlevel of 6500 to reply to this thread.");
         }
-        $threadstopwhendone = true;
     }
 } else {
 #############################################
@@ -317,17 +315,17 @@ if (isset($_POST['sage']) && trim($_POST['sage']) != "") $idcrypt .= "(sage)";
 // Length checks
 if (strlen($_POST['mesg']) == 0) fancyDie("You didn't write a post?!");
 if (strlen($_POST['mesg']) > 10000) fancyDie("Thanks for your contribution, but it was too large.");
-if (strlen($_POST['subj']) > 45) fancyDie("Subject is too long!");
+if (isset($_POST['subj']) && strlen($_POST['subj']) > 45) fancyDie("Subject is too long!");
 if (count(explode("<br>", $_POST['mesg'])) > 100) fancyDie("Your post has far too many lines in it!");
 
 // check for ID and board
 if (!isset($_POST['bbs'])) fancyDie("No board specified to post to!");
 if (!isset($_POST['id']) && !$isnewthread) fancyDie("No thread ID specified to post to!");
 if (!is_dir($_POST['bbs'])) fancyDie("Board specified does not exist.");
-if (!$isnewthread && !getThread($_POST['bbs'], $_POST['id'])) fancyDie("Thread ID specified does not exist.");
+if (!$isnewthread && !getThreadName($_POST['bbs'], $_POST['id'])) fancyDie("Thread ID specified does not exist.");
 
 // Tripcode mohel TODO: Encrypted trips are blocked?  Or not? -- Yes they would be because tripcode gen is done before this section :) 
-if ($_POST['name']) {
+if (isset($_POST['name']) && isset($trip)) {
     $censorme = checkMohel($_POST['name'], $trip);
 
     if ($censorme == true) {
@@ -335,6 +333,10 @@ if ($_POST['name']) {
         $_POST['name'] = "";
         $trip = '';
     }
+}
+
+if(!isset($trip)) {
+    $trip = null;
 }
 
 // anonymous, we love you!
@@ -352,14 +354,10 @@ setFloodMarker($_SERVER['REMOTE_ADDR']);
 
 /*if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies. //TODO
     fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
-    $threadstopwhendone = true;
+    lockThread($_POST['bbs'], $_POST['id']);
 }*/
 
-if($threadstopwhendone) {
-    lockThread($_POST['bbs'], $_POST['id']);
-}
-
-RebuildThreadList($_POST['bbs'], $_POST['id'], ($setting['neverbump'] && !$isnewthread ? true : $_POST['sage']), false);
+RebuildThreadList($_POST['bbs'], $_POST['id'], (isset($setting['neverbump']) && !$isnewthread ? true : isset($_POST['sage'])), false);
 ?>
 <html><title>Success</title>
     <meta http-equiv='refresh' content='1;url=<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>

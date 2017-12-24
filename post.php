@@ -303,7 +303,7 @@ if (!isset($_POST['id']) && !$isnewthread) fancyDie("No thread ID specified to p
 if (!is_dir($_POST['bbs'])) fancyDie("Board specified does not exist.");
 if (!$isnewthread && !getThreadName($_POST['bbs'], $_POST['id'])) fancyDie("Thread ID specified does not exist.");
 
-// Tripcode mohel TODO: Encrypted trips are blocked?  Or not? -- Yes they would be because tripcode gen is done before this section :) 
+// Tripcode mohel
 if (isset($_POST['name']) && isset($trip)) {
     $censorme = checkMohel($_POST['name'], $trip);
 
@@ -332,7 +332,6 @@ if ($isnewthread) { // If a new post
 setFloodMarker($_SERVER['REMOTE_ADDR']);
 
 /*if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies. //TODO
-    fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
     lockThread($_POST['bbs'], $_POST['id']);
 }*/
 
@@ -340,7 +339,7 @@ RebuildThreadList($_POST['bbs'], $_POST['id'], (isset($setting['neverbump']) && 
 ?>
 <html><title>Success</title>
     <meta http-equiv='refresh' content='1;url=<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>
-<? readfile("includes/skin/{$setting['skin']}/success.txt"); ?>
+<?php readfile("includes/skin/{$setting['skin']}/success.txt"); ?>
     <br>
     <small><a href='<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>Click here to be forwarded manually</a></small>
     <hr>

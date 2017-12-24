@@ -634,7 +634,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     }
     else {
         $top = file_get_contents("includes/skin/".$setting['skin']."/smallthreadtop.txt");
-        $top = str_replace("<%THREADNAME%>", "<a name='$threadid' href='" . linkToThread($boardname, $threadid, "1-{".$setting['postsperpage']."}") . "' class='unstyled'>$threadname</a>", $top);
+        $top = str_replace("<%THREADNAME%>", "<a name='$threadid' href='" . linkToThread($boardname, $threadid, "1-".$setting['postsperpage']."") . "' class='unstyled'>$threadname</a>", $top);
         $top = str_replace("<%STARTFORM%>", "<form name='post$postthing' action='post.php' method='POST'><input type='hidden' name='bbs' value='$boardname'><input type='hidden' name='id' value='$threadid'><input type='hidden' name='shiichan' value='proper'>", $top);
         $return = $top;
     }
@@ -651,12 +651,12 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
 
         $hidden = file_get_contents("includes/skin/".$setting['skin']."/hidden.txt");
         $hidden = str_replace("<%FEW%>", $setting['fpposts'], $hidden);
-        $hidden = str_replace("<%READ%>", linkToThread($boardname, $threadid, "1-{".$setting['postsperpage']."}") , $hidden);
+        $hidden = str_replace("<%READ%>", linkToThread($boardname, $threadid, "1-".$setting['postsperpage']."") , $hidden);
         $return.= $hidden;
     }
 
     foreach($postarray as $apost) {
-        list($start, $end) = explode('-', $apost);
+        @list($start, $end) = explode('-', $apost);
         if (strpos($start, 'l') === 0) {
             $start = ($numposts - intval(substr($start, 1))) + 1;
             $end = $numposts;
@@ -696,8 +696,8 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     $bottom = str_replace("<%NUMPOSTS%>", $numposts + 1, $bottom);
     if (isThreadLocked($boardname, $threadid)) $bottom = str_replace("<%TEXTAREA%>", "This thread is threadstopped. You can't reply anymore.", $bottom);
     else
-    if ($setting['namefield']) $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> Name <input name='name'> &nbsp;&nbsp;&nbsp; <input name='sage' type='checkbox'> Sage<br /><a href='" . linkToThread($boardname, $threadid, "1-{.".$setting['postsperpage']."}") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l{".$setting['postsperpage']."}") . "'>Last ".$setting['postsperpage']."</a> - <a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a>", $bottom);
-    else $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> &nbsp; <input name='sage' type='checkbox'> Sage<br /><br /><a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='" . linkToThread($boardname, $threadid, "1-{".$setting['postsperpage']."}") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l{".$setting['postsperpage']."}") . "'>Last ".$setting['postsperpage']."</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <small><a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a></small>", $bottom);
+    if ($setting['namefield']) $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> Name <input name='name'> &nbsp;&nbsp;&nbsp; <input name='sage' type='checkbox'> Sage<br /><a href='" . linkToThread($boardname, $threadid, "1-.".$setting['postsperpage']."") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l".$setting['postsperpage']."") . "'>Last ".$setting['postsperpage']."</a> - <a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a>", $bottom);
+    else $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> &nbsp; <input name='sage' type='checkbox'> Sage<br /><br /><a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='" . linkToThread($boardname, $threadid, "1-".$setting['postsperpage']."") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l".$setting['postsperpage']."") . "'>Last ".$setting['postsperpage']."</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <small><a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a></small>", $bottom);
     $bottom = str_replace("<%REPLYLINK%>", "post.php?id=$threadid&amp;bbs=$boardname", $bottom);
     $bottom = str_replace("<%ADMINLINK%>", "<a href='admin.php?task=manage&amp;bbs=$boardname&amp;tid=$threadid&amp;st=$start&amp;ed=$end'>Manage</a>", $bottom);
     $return.= $bottom;
@@ -731,6 +731,7 @@ function RebuildThreadList($bbs) {
                 break;
             }
             list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $subject[$i];
+            $replies++;
             $time = date("y/m/d(D)H:i:s", $lasttime);
             $icon = icons($i, $threadicon);
             $pages = ceil($replies / $setting['postsperpage']);
@@ -761,7 +762,7 @@ function RebuildThreadList($bbs) {
             list ($threadname, $author, $threadicon, $id, $replies, $lasttime, $trip) = $subject[$i];
             $time = date("y/m/d(D)H:i:s", $lasttime);
             $icon = icons($i, $threadicon);
-            fputs($f, "<tr><td><a href='" . linkToThread($bbs, $id, "1-{".$setting['postsperpage']."}") . "'>$icon</a></td><td><a href='" . linkToThread($bbs, $id, "l{".$setting['postsperpage']."}") . "'>$threadname</a></td><td>$author</td><td>$replies</td><td nowrap><small>$time</small></td></tr>");
+            fputs($f, "<tr><td><a href='" . linkToThread($bbs, $id, "1-".$setting['postsperpage']."") . "'>$icon</a></td><td><a href='" . linkToThread($bbs, $id, "l".$setting['postsperpage']."") . "'>$threadname</a></td><td>$author</td><td>$replies</td><td nowrap><small>$time</small></td></tr>");
         }
     }
 

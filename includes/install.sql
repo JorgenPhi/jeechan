@@ -30,8 +30,17 @@ CREATE TABLE `mohel` (
 
 CREATE TABLE `settings` (
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci NOT NULL
+  `value` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `head` mediumtext COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `flood` (
+  `ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT '0',
+  `time` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `flood`
+  ADD PRIMARY KEY (`ip`);
 
 ALTER TABLE `accounts`
   ADD PRIMARY KEY (`id`),

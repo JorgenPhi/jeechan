@@ -276,15 +276,16 @@ if(isset($_POST['action'])) {
 
             printSuccess("That mohel was successfully deleted from the database.");
             die();
-        case "enactban": // TODO
+        case "enactban":
             doesHavePermisison($mylevel, 3000);
             if (!isset($_POST['ip'])) {
                 fancyDie("no ip to ban");
             }
 
-            addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['jeeaccname']);
+            $ip = \Foolz\Inet\Inet::ptod($_POST['ip']);
+            addBan($ip, $_POST['pubres'], $_POST['privres'], $_COOKIE['jeeaccname']);
 
-            if ($_POST['message']) {
+            if (isset($_POST['message'])) { // TODO
                 if (!is_numeric($_POST['id'])) fancyDie("no post?");
                 $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
                 list($name, $trip, $date, $message, $id, $ip) = $thread[$_POST['id']];
@@ -297,18 +298,19 @@ if(isset($_POST['action'])) {
             }
 
             $reportMessage = "{$_POST['ip']} banned successfully.";
-            if ($_POST['message']) $reportMessage .= "</br>Ban message placed on post.";
+            if (isset($_POST['message'])) $reportMessage .= "</br>Ban message placed on post.";
             $reportMessage .= "<a href='admin.php?task=rebuild&bbs={$_POST['bbs']}'>Rewrite index.html</a>";
             printSuccess($reportMessage);
             die();
         case "unban":
             doesHavePermisison($mylevel, 3000);
-            if (!isset($_POST['id'])) {
-                fancyDie("no id?");
+            if (!isset($_POST['ip'])) {
+                fancyDie("no ip?");
             }
-            deleteBan($_POST['id']);
+            deleteBan($_POST['ip']);
 
             printSuccess("Unbanned successfully.");
+            die();
         case "newb":
             doesHavePermisison($mylevel, 8000);
             if (!isset($_POST['boardname']) || $_POST['boardname'] == "") {
@@ -320,6 +322,7 @@ if(isset($_POST['action'])) {
             if (is_dir($_POST['boardname'])) {
                 fancyDie("That name is already in use.");
             }
+            $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
 
             mkdir($_POST['boardname']);
 
@@ -329,7 +332,6 @@ if(isset($_POST['action'])) {
             createBoardSchema($_POST['boardname']);
             setBoardSettings($_POST['boardname'], $settings);
 
-            $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
             $setting['boardname'] = $_POST['namename'];
 
             RebuildThreadList($_POST['boardname']);
@@ -423,7 +425,7 @@ if(isset($_POST['action'])) {
                 fancyDie("Invalid board");
             }
             $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
-            list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
+            list($name, $trip, $date, $message, $id, $ip) = $thread[$_POST['id']];
             $thread[$_POST['id']] = "Aborn!<><>$date<>{$_POST['abornmesg']}<>Aborn!<>$ip";
             $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
             foreach ($thread as $line) {
@@ -452,7 +454,7 @@ if(isset($_POST['action'])) {
             if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
             if (!is_numeric($_POST['id'])) fancyDie("no post?");
             $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
-            list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
+            list($name, $trip, $date, $message, $id, $ip) = $thread[$_POST['id']];
             $thread[$_POST['id']] = "SILENT<>ABORN<>1234<>SILENT<>ABORN<>$ip";
             $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
             foreach ($thread as $line) {
@@ -463,9 +465,9 @@ if(isset($_POST['action'])) {
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Post succesfully aborned.
             <?php exit; 
-        case "delthread": // TODO
-            if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
-            unlink("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't delete");
+        case "delthread":
+            doesHavePermisison($mylevel, 2000);
+            deleteThread($_POST['bbs'],$_POST['dat']) or fancyDie("couldn't delete");
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
             $local = getBoardSettings($_POST['bbs']);
             if ($local) {
@@ -474,10 +476,8 @@ if(isset($_POST['action'])) {
                 }
             }
             RebuildThreadList($_POST['bbs']);
-            ?>
-            <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
-            Thread was deleted successfully.
-            <?php exit;
+            printSuccess("Thread was deleted successfully.");
+            die();
         case "confirmdelbrd":
     // removing an entire board
             doesHavePermisison($mylevel, 8000);
@@ -1007,7 +1007,7 @@ switch (@$_GET['task']) {
             $tmp = htmlspecialchars(substr($name, 0, 20));
             echo "<tr><td>$tmp";
             $tmp = htmlspecialchars(substr($message, 0, 40));
-            echo "</td><td>$tmp</td><td>$ip</td><td><a href='admin.php?bbs=$bbs&dat=$key&id=$i&task=aborn'>Aborn</a> | <a href='admin.php?bbs=$bbs&dat=$key&id=$i&task=quietaborn'>Silent</a> | <a href='admin.php?bbs=$bbs&dat=$key&id=$i&task=ban'>Ban</a></td></tr>";
+            echo "</td><td>$tmp</td><td>$ip</td><td><a href='admin.php?bbs=$bbs&dat=$key&id=$i&dbid=$id&task=aborn'>Aborn</a> | <a href='admin.php?bbs=$bbs&dat=$key&id=$i&dbid=$id&task=quietaborn'>Silent</a> | <a href='admin.php?bbs=$bbs&dat=$key&id=$i&dbid=$id&task=ban'>Ban</a></td></tr>";
         }
 
         echo "</table><a href='" . linkToThread($bbs, $key, "$st-$to") . "'>Back to Thread</a>";
@@ -1023,8 +1023,8 @@ switch (@$_GET['task']) {
                 $setting[$name] = $value;
             }
         }
-        $thread = file("$bbs/dat/$key.dat");
-        list($subj, $name, $icon) = explode("<=>", $thread[0]);
+        $thread = getThreadDat($bbs, $key) or fancyDie('That thread or board does not exist.');
+        list($subj, $name, $icon) = $thread[0];
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Edit Subject Confirmation</h1>
         <form action="admin.php" method="post"><p>
@@ -1043,6 +1043,7 @@ switch (@$_GET['task']) {
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
+        $dbid = $_GET['dbid'] or fancyDie("no dbid?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = getBoardSettings($bbs);
         if ($local) {
@@ -1055,30 +1056,32 @@ switch (@$_GET['task']) {
         Replace this post:
         <blockquote>
             <?php
-            $thread = file("$bbs/dat/$key.dat");
-            list($name, $trip, $date, $message, $myid, $ip) = explode("<>", $thread[$id]);
+            $thread = getThreadDat($bbs, $key) or fancyDie('That thread or board does not exist.');
+            list($name, $trip, $date, $message, $myid, $ip) = $thread[$id];
             $tmp = htmlspecialchars(substr($name, 0, 20));
             echo "<b>$tmp</b><br>";
             $tmp = htmlspecialchars(substr($message, 0, 50));
             echo "$tmp";
-            ?>...
+            ?>
         </blockquote>
         With this message:
         <form action="admin.php" method="post"><p>
                 <input type="hidden" name="bbs" value="<?= $bbs ?>">
                 <input type="hidden" name="dat" value="<?= $key ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">
+                <input type="hidden" name="dbid" value="<?= $dbid ?>">
                 <input type="hidden" name="action" value="aborn">
                 <input name="abornmesg" value="<?= $setting['aborn'] ?>">
                 <input type="submit" value="Confirm!">
         </form>
         <?php
         exit;
-    case "quietaborn": //TODO
+    case "quietaborn":
         if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
+        $dbid = $_GET['dbid'] or fancyDie("no dbid?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = getBoardSettings($bbs);
         if ($local) {
@@ -1091,29 +1094,31 @@ switch (@$_GET['task']) {
         Silently remove this post from the thread?
         <blockquote>
             <?php
-            $thread = file("$bbs/dat/$key.dat");
-            list($name, $trip, $date, $message, $myid, $ip) = explode("<>", $thread[$id]);
+            $thread = getThreadDat($bbs, $key) or fancyDie('That thread or board does not exist.');
+            list($name, $trip, $date, $message, $myid, $ip) = $thread[$id];
             $tmp = htmlspecialchars(substr($name, 0, 20));
             echo "<b>$tmp</b><br>";
             $tmp = htmlspecialchars(substr($message, 0, 50));
             echo "$tmp";
-            ?>...
+            ?>
         </blockquote>
         <form action="admin.php" method="post"><p>
                 <input type="hidden" name="bbs" value="<?= $bbs ?>">
                 <input type="hidden" name="dat" value="<?= $key ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">
+                <input type="hidden" name="dbid" value="<?= $dbid ?>">
                 <input type="hidden" name="action" value="silentaborn">
                 <input type="submit" value="Confirm!">
         </form>
 
         <?php
         exit;
-    case "ban": //TODO
+    case "ban":
         if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
         $id = $_GET['id'] or fancyDie("no post?");
+        $dbid = $_GET['dbid'] or fancyDie("no dbid?");
         $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
         $local = getBoardSettings($bbs);
         if ($local) {
@@ -1127,13 +1132,14 @@ switch (@$_GET['task']) {
         Ban the user who made this post?
         <blockquote>
             <?php
-            $thread = file("$bbs/dat/$key.dat");
-            list($name, $trip, $date, $message, $myid, $ip) = explode("<>", $thread[$id]);
+            $thread = getThreadDat($bbs, $key) or fancyDie('That thread or board does not exist.');
+            list($name, $trip, $date, $message, $myid, $ip) = $thread[$id];
+            $ip = \Foolz\Inet\Inet::dtop($ip);
             $tmp = htmlspecialchars(substr($name, 0, 20));
             echo "<b>$tmp</b><br>";
             $tmp = htmlspecialchars(substr($message, 0, 50));
             echo "$tmp";
-            ?>...
+            ?>
         </blockquote>
         <form action="admin.php" method="post"><p>
                 <input type="hidden" name="ip" value="<?= $ip ?>">
@@ -1148,11 +1154,12 @@ switch (@$_GET['task']) {
                 <input type="hidden" name="bbs" value="<?= $bbs ?>">
                 <input type="hidden" name="dat" value="<?= $key ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">
+                <input type="hidden" name="dbid" value="<?= $dbid ?>">
         </form>
 
 
         <?php exit;
-    case "delthread": //TODO
+    case "delthread":
         if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1179,7 +1186,7 @@ switch (@$_GET['task']) {
         ?>
         <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully unstopped.
-        <?php exit; case "managebans": //TODO
+        <?php exit; case "managebans":
     if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
     ?>
     <link rel="stylesheet" href="admin.css">
@@ -1198,7 +1205,8 @@ switch (@$_GET['task']) {
         $bans = allBans();
         if (count($bans) > 0) {
             foreach ($bans as $ban) {
-                echo "<tr><td>{$ban['ip']}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['bannedby']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='id' value='{$ban['id']}'><input type='submit' value='Unban'></form></td></tr>";
+                $ip = \Foolz\Inet\Inet::dtop($ban['ip']);
+                echo "<tr><td>{$ip}</td><td>" . htmlentities($ban['pubreason']) . "</td><td>" . htmlentities($ban['privreason']) . "</td><td>{$ban['bannedby']}</td><td><form action='admin.php' method='post'><input type='hidden' name='action' value='unban'><input type='hidden' name='ip' value='{$ban['ip']}'><input type='submit' value='Unban'></form></td></tr>";
             }
         }
         else echo "<tr><td colspan='5'>NO BANS! HOORAY!</td></tr>";

@@ -320,6 +320,10 @@ if(!isset($trip)) {
     $trip = null;
 }
 
+if(!isset($_POST['icon'])) {
+    $_POST['icon'] = null;
+}
+
 // anonymous, we love you!
 if ($_POST['name'] == "" && !$trip) $_POST['name'] = $setting['nameless'];
 

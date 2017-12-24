@@ -90,12 +90,16 @@ function createBoardSchema($board) {
     $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `create_thread_%%BOARD%%` (`num` INT, `timestamp` INT) BEGIN INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, `timestamp`, `timestamp`, 0, 0, 0); END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `update_thread_%%BOARD%%` (`tnum` INT, `p_timestamp` INT) BEGIN UPDATE `%%BOARD%%_threads` op SET op.time_last_modified = (COALESCE(GREATEST(op.time_last_modified, p_timestamp), op.time_op)), op.nreplies = (op.nreplies + 1) WHERE op.thread_num = tnum; END;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `delete_thread_%%BOARD%%` (`tnum` INT) BEGIN DELETE FROM `%%BOARD%%_threads` WHERE thread_num = tnum; END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `icon` varchar(255) DEFAULT NULL, `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `poster_hash` varchar(255) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%_threads` (`thread_num` int(10) UNSIGNED NOT NULL, `time_op` int(10) UNSIGNED NOT NULL, `time_last_modified` int(10) UNSIGNED NOT NULL, `nreplies` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\') DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` ADD PRIMARY KEY (`num`), ADD KEY `thread_num_index` (`thread_num`,`num`), ADD KEY `op_index` (`op`), ADD KEY `name_trip_index` (`name`,`trip`), ADD KEY `trip_index` (`trip`), ADD KEY `poster_ip_index` (`poster_ip`), ADD KEY `timestamp_index` (`timestamp`);'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` MODIFY `num` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%_threads` ADD PRIMARY KEY (`thread_num`), ADD KEY `time_op_index` (`time_op`), ADD KEY `time_last_modified_index` (`time_last_modified`), ADD KEY `sticky_index` (`sticky`), ADD KEY `locked_index` (`locked`);'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TRIGGER `after_ins_%%BOARD%%` AFTER INSERT ON `%%BOARD%%` FOR EACH ROW BEGIN IF NEW.op = 1 THEN CALL create_thread_%%BOARD%%(NEW.num, NEW.timestamp); END IF; CALL update_thread_%%BOARD%%(NEW.thread_num, NEW.timestamp); END;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TRIGGER `after_del_%%BOARD%%` AFTER DELETE ON `%%BOARD%%` FOR EACH ROW BEGIN CALL update_thread_%%BOARD%%(OLD.thread_num, OLD.timestamp); IF OLD.op = 1 THEN CALL delete_thread_%%BOARD%%(OLD.num); END IF; END;'));
+
+
 }
 
 function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $posttime, $comment, $idcrypt, $ip) {
@@ -153,6 +157,22 @@ function getThreadName($board, $thread_num) {
         return $row[0];
     }
     return false;
+}
+
+function deleteThread($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+
+    // Replies
+    $stmt = $jee_db->prepare("DELETE FROM `{$board}` WHERE `thread_num` = :thread_num");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // OP
+    $stmt = $jee_db->prepare("DELETE FROM `{$board}` WHERE `num` = :thread_num");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+    return true;
 }
 
 function isThreadLocked($board, $thread_num) {
@@ -441,7 +461,7 @@ function addMohel($mohel) {
 
 function addban($ip, $pubres, $privres, $bannedby) {
     global $jee_db;
-    $stmt = $jee_db->prepare("INSERT INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
+    $stmt = $jee_db->prepare("INSERT IGNORE INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
     $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
     $stmt->bindValue(':pubres', $pubres, PDO::PARAM_STR);
     $stmt->bindValue(':privres', $privres, PDO::PARAM_STR);
@@ -503,8 +523,8 @@ function deleteMohel($id) {
 
 function deleteBan($id) {
     global $jee_db;
-    $stmt = $jee_db->prepare("DELETE FROM bans WHERE id=:id LIMIT 1");
-    $stmt->bindValue(':id', $id, PDO::PARAM_STR);
+    $stmt = $jee_db->prepare("DELETE FROM bans WHERE ip=:ip LIMIT 1");
+    $stmt->bindValue(':ip', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
 

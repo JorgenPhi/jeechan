@@ -3,5 +3,5 @@
 </dl>
 </form>
 <hr>
-<a href="/bbs/12/">Return</a> &middot; <small><%ADMINLINK%></small>
+<small><%ADMINLINK%></small>
 

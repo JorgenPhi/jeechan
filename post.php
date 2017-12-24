@@ -119,6 +119,8 @@ if (isset($_GET['id'])) {
 ###########################
 // AND AWAYYYY WE GOOO!!!!
 
+$ip = \Foolz\Inet\Inet::ptod($_SERVER['REMOTE_ADDR']);
+
 // Check for POST and no in-forums spoofing
 if ($_SERVER['REQUEST_METHOD'] != "POST") {
     fancyDie("Trying to GET post.php?<meta http-equiv='refresh' content='0;url=.'>");
@@ -135,12 +137,12 @@ if (isset($_POST['subj'])) {
 }
 
 // check for ban
-if ($ban = getBan($_SERVER['REMOTE_ADDR'])) {
+if ($ban = getBan($ip)) {
     fancyDie("<b>You have been banned from this message board.</b><p>The moderation team supplied this reason: <b>{$ban['pubreason']}</b>");
 }
 
 // check for flood
-$lasttime = getFloodMarker($_SERVER['REMOTE_ADDR']);
+$lasttime = getFloodMarker($ip);
 if($lasttime != false && $lasttime + 5 > time()) {
     fancyDie("Please wait at least 5 seconds between posts!<p>You may have recieved this message from submitting your post more than once. Don't submit it again.");
 }
@@ -324,12 +326,12 @@ if ($_POST['name'] == "" && !$trip) $_POST['name'] = $setting['nameless'];
 // It's time to actually write the post.
 
 if ($isnewthread) { // If a new post
-    addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $thisverysecond, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
+    addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $thisverysecond, $_POST['mesg'], $idcrypt, $ip);
 } else {
-    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $thisverysecond, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
+    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $thisverysecond, $_POST['mesg'], $idcrypt, $ip);
 }
 
-setFloodMarker($_SERVER['REMOTE_ADDR']);
+setFloodMarker($ip);
 
 /*if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies. //TODO
     lockThread($_POST['bbs'], $_POST['id']);

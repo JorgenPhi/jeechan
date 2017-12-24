@@ -276,7 +276,7 @@ if(isset($_POST['action'])) {
 
             printSuccess("That mohel was successfully deleted from the database.");
             die();
-        case "enactban":
+        case "enactban": // TODO
             doesHavePermisison($mylevel, 3000);
             if (!isset($_POST['ip'])) {
                 fancyDie("no ip to ban");
@@ -284,10 +284,10 @@ if(isset($_POST['action'])) {
 
             addBan($_POST['ip'], $_POST['pubres'], $_POST['privres'], $_COOKIE['jeeaccname']);
 
-            if ($_POST['message']) { // TODO
+            if ($_POST['message']) {
                 if (!is_numeric($_POST['id'])) fancyDie("no post?");
-                $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
-                list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
+                $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
+                list($name, $trip, $date, $message, $id, $ip) = $thread[$_POST['id']];
                 $thread[$_POST['id']] = "$name<>$date<>$trip<>$message<br><br><b style='color:red'>(USER WAS BANNED FOR THIS POST)</b><>$id<>$ip";
                 $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
                 foreach ($thread as $line) {
@@ -422,7 +422,7 @@ if(isset($_POST['action'])) {
             if(!getBoardSettings($_POST['bbs'])) {
                 fancyDie("Invalid board");
             }
-            $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
+            $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
             list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
             $thread[$_POST['id']] = "Aborn!<><>$date<>{$_POST['abornmesg']}<>Aborn!<>$ip";
             $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
@@ -437,7 +437,7 @@ if(isset($_POST['action'])) {
         case "editsubj": // TODO
             if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
             if (!$_POST['subj']) fancyDie("no subject? not good");
-            $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
+            $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
             $thread[0] = "{$_POST['subj']}<=>{$_POST['name']}<=>{$_POST['icon']}\n";
             $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
             foreach ($thread as $line) {
@@ -451,7 +451,7 @@ if(isset($_POST['action'])) {
         case "silentaborn": // TODO
             if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
             if (!is_numeric($_POST['id'])) fancyDie("no post?");
-            $thread = file("{$_POST['bbs']}/dat/{$_POST['dat']}.dat") or fancyDie("couldn't open");
+            $thread = getThreadDat($_POST['bbs'], $_POST['dat']) or fancyDie("couldn't open");
             list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$_POST['id']]);
             $thread[$_POST['id']] = "SILENT<>ABORN<>1234<>SILENT<>ABORN<>$ip";
             $k = fopen("{$_POST['bbs']}/dat/{$_POST['dat']}.dat", "w") or fancyDie("couldn't write");
@@ -985,13 +985,13 @@ switch (@$_GET['task']) {
 // some errors
         if (!$bbs) fancyDie("You didn't specify a BBS.");
         if (!$key) fancyDie("You didn't specify a thread to read.");
-        if (!file_exists("$bbs/dat/$key.dat")) fancyDie('That thread or board does not exist.');
-        $thread = file("$bbs/dat/$key.dat");
+        if (!getThreadDat($bbs, $key)) fancyDie('That thread or board does not exist.');
+        $thread = getThreadDat($bbs, $key);
         ?>
         <link rel="stylesheet" href="admin.css">
         <?php
         echo "<h1>Managing $bbs/$key</h1>";
-        list ($threadname, $author, $threadicon) = explode("<=>", $thread[0]);
+        list ($threadname, $author, $threadicon) = $thread[0];
 
         $tmp = substr($threadname, 0, 40);
         echo "<h2>$tmp</h2>";
@@ -1002,7 +1002,8 @@ switch (@$_GET['task']) {
         echo "<table border='2'><tr><th>Name</th><th>Post</th><th>IP</th><th>Actions</th></tr>";
 
         for ($i = $st; $i <= $to; $i++) {
-            list($name, $trip, $date, $message, $id, $ip) = explode("<>", $thread[$i]);
+            list($name, $trip, $date, $message, $id, $ip) = $thread[$i];
+            $ip = \Foolz\Inet\Inet::dtop($ip);
             $tmp = htmlspecialchars(substr($name, 0, 20));
             echo "<tr><td>$tmp";
             $tmp = htmlspecialchars(substr($message, 0, 40));
@@ -1011,7 +1012,7 @@ switch (@$_GET['task']) {
 
         echo "</table><a href='" . linkToThread($bbs, $key, "$st-$to") . "'>Back to Thread</a>";
         exit;
-    case "editsubj":
+    case "editsubj": //TODO
         if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1037,7 +1038,7 @@ switch (@$_GET['task']) {
         </form>
         <?php
         exit;
-    case "aborn":
+    case "aborn": //TODO
         if ($mylevel < 1000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1073,7 +1074,7 @@ switch (@$_GET['task']) {
         </form>
         <?php
         exit;
-    case "quietaborn":
+    case "quietaborn": //TODO
         if ($mylevel < 1500) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1108,7 +1109,7 @@ switch (@$_GET['task']) {
 
         <?php
         exit;
-    case "ban":
+    case "ban": //TODO
         if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1151,7 +1152,7 @@ switch (@$_GET['task']) {
 
 
         <?php exit;
-    case "delthread":
+    case "delthread": //TODO
         if ($mylevel < 2000) fancyDie("Fnord! You don't have clearance for that.");
         $bbs = $_GET['bbs'] or fancyDie("no board?");
         $key = $_GET['dat'] or fancyDie("no thread?");
@@ -1178,7 +1179,7 @@ switch (@$_GET['task']) {
         ?>
         <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully unstopped.
-        <?php exit; case "managebans":
+        <?php exit; case "managebans": //TODO
     if ($mylevel < 3000) fancyDie("Fnord! You don't have clearance for that.");
     ?>
     <link rel="stylesheet" href="admin.css">

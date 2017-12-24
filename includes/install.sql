@@ -16,7 +16,7 @@ INSERT INTO `accounts` (`id`, `username`, `password`, `loginkey`, `addedby`, `le
 
 CREATE TABLE `bans` (
   `id` int(11) NOT NULL,
-  `ip` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT '0' COLLATE utf8mb4_unicode_ci,
   `pubreason` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `privreason` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `bannedby` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,

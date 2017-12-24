@@ -8,6 +8,7 @@
 require 'includes/settings.php';
 require 'includes/lib/passwordcompat.php';
 require 'includes/lib/abbc/abbc.lib.php';
+require_once('includes/inet/src/Inet.php');
 
  // ABBC BBCode processor.
 // current version (int)
@@ -100,8 +101,6 @@ function createBoardSchema($board) {
 function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $posttime, $comment, $idcrypt, $ip) {
     global $jee_db;
     $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
-    require_once('includes/inet/src/Inet.php');
-    $ip = \Foolz\Inet\Inet::ptod($ip);
     if($thread_num == 0) {
         $op = 1;
     } else {
@@ -135,6 +134,10 @@ function getThreadDat($board, $thread_num) {
     $stmt->bindValue(':thread_num2', $thread_num, PDO::PARAM_INT);
     $stmt->execute();
     $posts = $stmt->fetchAll(PDO::FETCH_NUM);
+
+    if($header == array()) {
+        return false;
+    }
 
     return (array_merge($header,$posts));
 }
@@ -474,7 +477,7 @@ function checkMohel($name, $trip) {
 function getBan($ip) {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT * FROM bans WHERE ip=:ip LIMIT 1");
-    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rows as $row) {
@@ -510,13 +513,13 @@ function setFloodMarker($ip) {
     if(!getFloodMarker($ip)) {
         // Create the key
         $stmt = $jee_db->prepare("INSERT INTO `flood` VALUES (:ip, :time)");
-        $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+        $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
         $stmt->bindValue(':time', time(), PDO::PARAM_INT);
         $stmt->execute();
     } else {
         // Update
         $stmt = $jee_db->prepare("UPDATE `flood` SET `time`=:time WHERE `ip`=:ip");
-        $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+        $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
         $stmt->bindValue(':time', time(), PDO::PARAM_INT);
         $stmt->execute();
     }
@@ -525,7 +528,7 @@ function setFloodMarker($ip) {
 function getFloodMarker($ip) {
     global $jee_db;
     $stmt = $jee_db->prepare("SELECT `time` FROM `flood` WHERE ip=:ip LIMIT 1");
-    $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
+    $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rows as $row) {
@@ -598,11 +601,11 @@ function PrintPages($numposts, $boardname, $threadid, $postsperpage) {
     return $moot . "</span>";
 }
 
-function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
+function PrintThread($boardname, $threadid, $postarray, $isitreadphp) {
     global $setting, $JEEVERSION;
     $postthing = 1;
     $postfile = file_get_contents("includes/skin/".$setting['skin']."/post.txt");
-    $thread = getThreadDat($boardname, $threadid);
+    $thread = getThreadDat($boardname, $threadid) or fancyDie('That thread or board does not exist.');
     $numposts = count($thread) - 1;
     if (!$isitreadphp) {
         $postthing = $threadid;

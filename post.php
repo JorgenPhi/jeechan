@@ -335,7 +335,7 @@ setFloodMarker($_SERVER['REMOTE_ADDR']);
     lockThread($_POST['bbs'], $_POST['id']);
 }*/
 
-RebuildThreadList($_POST['bbs'], $_POST['id'], (isset($setting['neverbump']) && !$isnewthread ? true : isset($_POST['sage'])), false);
+RebuildThreadList($_POST['bbs']));
 ?>
 <html><title>Success</title>
     <meta http-equiv='refresh' content='1;url=<?= $setting['urltoforum'] ?><?= $_POST['bbs'] ?>/'>

@@ -692,7 +692,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
 
 // ### shall we rewrite index.html?
 
-function RebuildThreadList($bbs, $thisid, $sage, $rmthread) { //TODO
+function RebuildThreadList($bbs) {
     global $setting, $JEEVERSION;
     $subject = getSubjectTxt($bbs);
     $f = fopen("$bbs/index.html", "w") or die("couldn't write to index.html");

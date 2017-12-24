@@ -332,7 +332,7 @@ if(isset($_POST['action'])) {
             $setting = getGlobalSettings() or fancyDie("Eh? Couldn't fetch the global settings file?!");
             $setting['boardname'] = $_POST['namename'];
 
-            RebuildThreadList($_POST['boardname'], 1, true, false);
+            RebuildThreadList($_POST['boardname']);
             printSuccess("{$_POST['namename']} was created successfully.");
             die();
         case "saveboardsettings":
@@ -473,7 +473,7 @@ if(isset($_POST['action'])) {
                     $setting[$name] = $value;
                 }
             }
-            RebuildThreadList($_POST['bbs'], $_POST['dat'], true, true);
+            RebuildThreadList($_POST['bbs']);
             ?>
             <meta http-equiv="refresh" content="0;admin.php?task=rebuild&bbs=<?= $_POST['bbs'] ?>">
             Thread was deleted successfully.
@@ -826,7 +826,7 @@ switch (@$_GET['task']) {
                 $setting[$name] = $value;
             }
         }
-        RebuildThreadList($_GET['bbs'], 1, true, false);
+        RebuildThreadList($_GET['bbs']);
         ?>
         <link rel="stylesheet" href="admin.css">
         <meta http-equiv='refresh' content='1;<?= $setting['urltoforum'] ?><?= $_GET['bbs'] ?>/'>

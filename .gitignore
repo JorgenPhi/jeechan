@@ -2,10 +2,10 @@
 nogit/
 
 # settings
-includes/settings.php
+app/includes/settings.php
 
 # home page
-index.html
+app/index.html
 
 # boards
-/*/index.html
+/app/*/index.html

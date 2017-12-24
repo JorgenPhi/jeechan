@@ -11,6 +11,7 @@ Installation guide
 3. Edit settings.php with the database connection credentials
 4. Browse to /admin.php
     * The default username and password is admin / admin
+    * You should create a new account and delete the admin account. 
 
 
 Original copyright

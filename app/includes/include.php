@@ -226,7 +226,7 @@ function deleteBoardSchema($board) {
 
 function getGlobalSettings() {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`='_globalsettings' LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT `value` FROM `_settings` WHERE `name`='_globalsettings' LIMIT 1");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rows as $row) {
@@ -245,12 +245,12 @@ function setGlobalSettings($settings) {
     $settings = json_encode($settings);
     if(!getGlobalSettings()) {
         // Create the key
-        $stmt = $jee_db->prepare("INSERT INTO settings(name,value) VALUES('_globalsettings',:settings)");
+        $stmt = $jee_db->prepare("INSERT INTO _settings(name,value) VALUES('_globalsettings',:settings)");
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
     } else {
         // Update
-        $stmt = $jee_db->prepare("UPDATE settings SET value=:settings WHERE name='_globalsettings'");
+        $stmt = $jee_db->prepare("UPDATE _settings SET value=:settings WHERE name='_globalsettings'");
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
     }
@@ -259,7 +259,7 @@ function setGlobalSettings($settings) {
 function getBoardList() {
     global $jee_db;
     $boards = array();
-    $stmt = $jee_db->prepare("SELECT `name` FROM `settings` WHERE `name`!='_globalsettings' ORDER BY `name` DESC;");
+    $stmt = $jee_db->prepare("SELECT `name` FROM `_settings` WHERE `name`!='_globalsettings' ORDER BY `name` DESC;");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rows as $row) {
@@ -270,7 +270,7 @@ function getBoardList() {
 
 function getBoardHead($board) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT `head` FROM `settings` WHERE `name`=:board LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT `head` FROM `_settings` WHERE `name`=:board LIMIT 1");
     $stmt->bindValue(':board', $board, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -287,7 +287,7 @@ function getBoardHead($board) {
 function setBoardHead($board, $head) {
     global $jee_db;
     $settings = json_encode($settings);
-    $stmt = $jee_db->prepare("UPDATE settings SET head=:head WHERE name=:board");
+    $stmt = $jee_db->prepare("UPDATE _settings SET head=:head WHERE name=:board");
     $stmt->bindValue(':board', $board, PDO::PARAM_STR);
     $stmt->bindValue(':head', $head, PDO::PARAM_STR);
     $stmt->execute();
@@ -295,7 +295,7 @@ function setBoardHead($board, $head) {
 
 function getBoardSettings($board) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT `value` FROM `settings` WHERE `name`=:board LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT `value` FROM `_settings` WHERE `name`=:board LIMIT 1");
     $stmt->bindValue(':board', $board, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -315,13 +315,13 @@ function setBoardSettings($board, $settings) {
     $settings = json_encode($settings);
     if(!getBoardSettings($board)) {
         // Create the key
-        $stmt = $jee_db->prepare("INSERT INTO settings(name,value) VALUES(:board,:settings)");
+        $stmt = $jee_db->prepare("INSERT INTO _settings(name,value) VALUES(:board,:settings)");
         $stmt->bindValue(':board', $board, PDO::PARAM_STR);
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
     } else {
         // Update
-        $stmt = $jee_db->prepare("UPDATE settings SET value=:settings WHERE name=:board");
+        $stmt = $jee_db->prepare("UPDATE _settings SET value=:settings WHERE name=:board");
         $stmt->bindValue(':board', $board, PDO::PARAM_STR);
         $stmt->bindValue(':settings', $settings, PDO::PARAM_STR);
         $stmt->execute();
@@ -330,7 +330,7 @@ function setBoardSettings($board, $settings) {
 
 function deleteBoardSettings($board) {
     global $jee_db;
-    $stmt = $jee_db->prepare("DELETE FROM settings WHERE name=:board LIMIT 1");
+    $stmt = $jee_db->prepare("DELETE FROM _settings WHERE name=:board LIMIT 1");
     $stmt->bindValue(':board', $board, PDO::PARAM_STR);
     $stmt->execute();
 }
@@ -373,7 +373,7 @@ function checkCredentials($username, $password) {
 
 function checkLoginKey($username, $loginkey) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT * FROM accounts WHERE username=:username AND loginkey=:loginkey LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT * FROM _accounts WHERE username=:username AND loginkey=:loginkey LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', $loginkey, PDO::PARAM_STR);
     $stmt->execute();
@@ -387,7 +387,7 @@ function checkLoginKey($username, $loginkey) {
 
 function accountByUsername($username) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT * FROM accounts WHERE username=:username LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT * FROM _accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
     $accounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -400,25 +400,25 @@ function accountByUsername($username) {
 
 function allAccounts() {
     global $jee_db;
-    $stmt = $jee_db->query("SELECT * FROM accounts ORDER BY level DESC");
+    $stmt = $jee_db->query("SELECT * FROM _accounts ORDER BY level DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function allBans() {
     global $jee_db;
-    $stmt = $jee_db->query("SELECT * FROM bans ORDER BY at DESC");
+    $stmt = $jee_db->query("SELECT * FROM _bans ORDER BY at DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function allMohels() {
     global $jee_db;
-    $stmt = $jee_db->query("SELECT * FROM mohel ORDER BY id DESC");
+    $stmt = $jee_db->query("SELECT * FROM _mohel ORDER BY id DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function updateAccountLevel($username, $level) {
     global $jee_db;
-    $stmt = $jee_db->prepare("UPDATE accounts SET level=:level WHERE username=:username LIMIT 1");
+    $stmt = $jee_db->prepare("UPDATE _accounts SET level=:level WHERE username=:username LIMIT 1");
     $stmt->bindValue(':level', intval($level) , PDO::PARAM_INT);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
@@ -426,7 +426,7 @@ function updateAccountLevel($username, $level) {
 
 function updateAccountPassword($username, $password) {
     global $jee_db;
-    $stmt = $jee_db->prepare("UPDATE accounts SET password=:password,loginkey=:loginkey WHERE username=:username LIMIT 1");
+    $stmt = $jee_db->prepare("UPDATE _accounts SET password=:password,loginkey=:loginkey WHERE username=:username LIMIT 1");
     $stmt->bindValue(':password', jeeHashPassword($password) , PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', newLoginKey() , PDO::PARAM_STR);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
@@ -435,7 +435,7 @@ function updateAccountPassword($username, $password) {
 
 function updateAccountCapcode($username, $capcode) {
     global $jee_db;
-    $stmt = $jee_db->prepare("UPDATE accounts SET capcode=:capcode WHERE username=:username LIMIT 1");
+    $stmt = $jee_db->prepare("UPDATE _accounts SET capcode=:capcode WHERE username=:username LIMIT 1");
     $stmt->bindValue(':capcode', $capcode, PDO::PARAM_STR);
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
@@ -443,7 +443,7 @@ function updateAccountCapcode($username, $capcode) {
 
 function addAccount($username, $password, $level) {
     global $jee_db, $myaccount;
-    $stmt = $jee_db->prepare("INSERT INTO accounts(username,password,loginkey,addedby,level) VALUES(:username,:password,:loginkey,:addedby,:level)");
+    $stmt = $jee_db->prepare("INSERT INTO _accounts(username,password,loginkey,addedby,level) VALUES(:username,:password,:loginkey,:addedby,:level)");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->bindValue(':password', jeeHashPassword($password) , PDO::PARAM_STR);
     $stmt->bindValue(':loginkey', newLoginKey() , PDO::PARAM_STR);
@@ -454,14 +454,14 @@ function addAccount($username, $password, $level) {
 
 function addMohel($mohel) {
     global $jee_db, $myaccount;
-    $stmt = $jee_db->prepare("INSERT INTO mohel(mohel) VALUES(:mohel)");
+    $stmt = $jee_db->prepare("INSERT INTO _mohel(mohel) VALUES(:mohel)");
     $stmt->bindValue(':mohel', $mohel, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function addban($ip, $pubres, $privres, $bannedby) {
     global $jee_db;
-    $stmt = $jee_db->prepare("INSERT IGNORE INTO bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
+    $stmt = $jee_db->prepare("INSERT IGNORE INTO _bans(ip,pubreason,privreason,bannedby,at) VALUES(:ip,:pubres,:privres,:bannedby,:at)");
     $stmt->bindValue(':ip', trim($ip), PDO::PARAM_STR);
     $stmt->bindValue(':pubres', $pubres, PDO::PARAM_STR);
     $stmt->bindValue(':privres', $privres, PDO::PARAM_STR);
@@ -472,7 +472,7 @@ function addban($ip, $pubres, $privres, $bannedby) {
 
 function checkMohel($name, $trip) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT COUNT(*) FROM mohel WHERE mohel=:mohel LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT COUNT(*) FROM _mohel WHERE mohel=:mohel LIMIT 1");
     $stmt->bindValue(':mohel', $name, PDO::PARAM_STR);
     $stmt->execute();
     if (intval($stmt->fetchColumn()) > 0) {
@@ -496,7 +496,7 @@ function checkMohel($name, $trip) {
 
 function getBan($ip) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT * FROM bans WHERE ip=:ip LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT * FROM _bans WHERE ip=:ip LIMIT 1");
     $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -509,21 +509,21 @@ function getBan($ip) {
 
 function deleteAccountByUsername($username) {
     global $jee_db;
-    $stmt = $jee_db->prepare("DELETE FROM accounts WHERE username=:username LIMIT 1");
+    $stmt = $jee_db->prepare("DELETE FROM _accounts WHERE username=:username LIMIT 1");
     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function deleteMohel($id) {
     global $jee_db;
-    $stmt = $jee_db->prepare("DELETE FROM mohel WHERE id=:id LIMIT 1");
+    $stmt = $jee_db->prepare("DELETE FROM _mohel WHERE id=:id LIMIT 1");
     $stmt->bindValue(':id', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
 
 function deleteBan($id) {
     global $jee_db;
-    $stmt = $jee_db->prepare("DELETE FROM bans WHERE ip=:ip LIMIT 1");
+    $stmt = $jee_db->prepare("DELETE FROM _bans WHERE ip=:ip LIMIT 1");
     $stmt->bindValue(':ip', $id, PDO::PARAM_STR);
     $stmt->execute();
 }
@@ -532,13 +532,13 @@ function setFloodMarker($ip) {
     global $jee_db;
     if(!getFloodMarker($ip)) {
         // Create the key
-        $stmt = $jee_db->prepare("INSERT INTO `flood` VALUES (:ip, :time)");
+        $stmt = $jee_db->prepare("INSERT INTO `_flood` VALUES (:ip, :time)");
         $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
         $stmt->bindValue(':time', time(), PDO::PARAM_INT);
         $stmt->execute();
     } else {
         // Update
-        $stmt = $jee_db->prepare("UPDATE `flood` SET `time`=:time WHERE `ip`=:ip");
+        $stmt = $jee_db->prepare("UPDATE `_flood` SET `time`=:time WHERE `ip`=:ip");
         $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
         $stmt->bindValue(':time', time(), PDO::PARAM_INT);
         $stmt->execute();
@@ -547,7 +547,7 @@ function setFloodMarker($ip) {
 
 function getFloodMarker($ip) {
     global $jee_db;
-    $stmt = $jee_db->prepare("SELECT `time` FROM `flood` WHERE ip=:ip LIMIT 1");
+    $stmt = $jee_db->prepare("SELECT `time` FROM `_flood` WHERE ip=:ip LIMIT 1");
     $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

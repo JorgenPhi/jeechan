@@ -322,7 +322,6 @@ if(isset($_POST['action'])) {
             }
 
             mkdir($_POST['boardname']);
-            mkdir($_POST['boardname'] . "/dat"); // TODO
 
             $settings = array(
                 "boardname" => $_POST['namename']

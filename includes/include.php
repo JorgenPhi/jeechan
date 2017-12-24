@@ -153,6 +153,22 @@ function isThreadLocked($board, $thread_num) {
     return false;
 }
 
+function lockThread($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+    $stmt = $jee_db->prepare("UPDATE `{$board}_threads` SET `locked`=1 WHERE `thread_num`=:thread_num LIMIT 1;");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+}
+
+function unlockThread($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+    $stmt = $jee_db->prepare("UPDATE `{$board}_threads` SET `locked`=0 WHERE `thread_num`=:thread_num LIMIT 1;");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+}
+
 function getSubjectTxt($board) {
     global $jee_db;
     $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);

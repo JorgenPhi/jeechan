@@ -996,7 +996,7 @@ switch (@$_GET['task']) {
 
         $tmp = substr($threadname, 0, 40);
         echo "<h2>$tmp</h2>";
-        if (is_writable("$bbs/dat/$key.dat")) echo "<a href='admin.php?bbs=$bbs&dat=$key&task=threadstop'>Threadstop</a>";
+        if (!isThreadLocked($bbs,$key)) echo "<a href='admin.php?bbs=$bbs&dat=$key&task=threadstop'>Threadstop</a>";
         else echo "<a href='admin.php?bbs=$bbs&dat=$key&task=unthreadstop'>Un-threadstop</a>";
         if ($mylevel > 1999) echo "<br><a href='admin.php?bbs=$bbs&dat=$key&task=delthread'>Delete Thread</a>";
         if ($mylevel > 7999) echo "<br><a href='admin.php?bbs=$bbs&dat=$key&task=editsubj'>Edit Subject</a>";
@@ -1169,13 +1169,13 @@ switch (@$_GET['task']) {
         <input type="submit" value="Confirm!">
         <?php exit;
     case "threadstop";
-        chmod("{$_GET['bbs']}/dat/{$_GET['dat']}.dat", 0440) or fancyDie("couldn't chmod");
+        lockThread($_GET['bbs'], $_GET['dat']);
         ?>
         <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully stopped.
         <?php exit;
     case "unthreadstop";
-        chmod("{$_GET['bbs']}/dat/{$_GET['dat']}.dat", 0666) or fancyDie("couldn't chmod");
+        unlockThread($_GET['bbs'], $_GET['dat']);
         ?>
         <meta http-equiv='refresh' content='0;admin.php?task=rebuild&bbs=<?= $_GET['bbs'] ?>'>
         Thread was successfully unstopped.

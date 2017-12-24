@@ -202,7 +202,6 @@ if ($_POST['pass']) {
         if (intval($account['level']) < 6500) {
             fancyDie("You need a userlevel of 6500 to reply to this thread.");
         }
-        chmod("{$_POST['bbs']}/dat/{$_POST['id']}.dat", 0666);
         $threadstopwhendone = true;
     }
 } else {
@@ -353,8 +352,12 @@ setFloodMarker($_SERVER['REMOTE_ADDR']);
 
 /*if (count(file("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) > 999) { // Match anything with 1000 or greater replies. //TODO
     fwrite($handle, "Over 1000 Thread<><>$thisverysecond<>This thread has over 1000 replies.<br>You can't reply anymore.<>Over 1000<>1.1.1.1\n");
+    $threadstopwhendone = true;
 }*/
 
+if($threadstopwhendone) {
+    lockThread($_POST['bbs'], $_POST['id']);
+}
 
 RebuildThreadList($_POST['bbs'], $_POST['id'], ($setting['neverbump'] && !$isnewthread ? true : $_POST['sage']), false);
 ?>

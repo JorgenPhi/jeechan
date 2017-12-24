@@ -87,15 +87,14 @@ if (isset($_GET['shiichan']) && $_GET['shiichan'] == "writenew") {
 
 // If we're being called to write an advanced reply, write the advanced reply dammit.
 if (isset($_GET['id'])) {
-    $thread = file("{$_GET['bbs']}/dat/{$_GET['id']}.dat") or fancyDie("Couldn't open that thread");
-    list ($threadname, $author, $lastposted) = explode("<=>", $thread[0]);
+    $threadname = getThreadName($_GET['bbs'], $_GET['id']) or fancyDie("Couldn't open that thread");
     $html = file_get_contents("includes/skin/{$setting['skin']}/addreply.txt");
     if (isset($_COOKIE['jeeaccname'])) {
         $html = str_replace("<%NAMECOOKIE%>", "value='{$_COOKIE['jeeaccname']}'", $html); 
     } else {
         $html = str_replace("<%NAMECOOKIE%>", "", $html);
     }
-    if (!is_writable("{$_GET['bbs']}/dat/{$_GET['id']}.dat")) {
+    if (isThreadLocked($_GET['bbs'], $_GET['id'])) {
         $html = str_replace("<%THREADSTOPPED%>", "<h3>This thread is threadstopped!!</h3>", $html); 
     } else {
         $html = str_replace("<%THREADSTOPPED%>", "", $html);
@@ -199,7 +198,7 @@ if ($_POST['pass']) {
     $idcrypt = "<b>(capped)</b> ";
 
     if (intval($account['level'] < 7500 && $setting['adminsonly'] && $_POST['subj'])) fancyDie("You need a userlevel of 7500 to start a thread."); // admins-only threads...
-    if (!$isnewthread && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) {
+    if (!$isnewthread && isThreadLocked($_POST['bbs'], $_POST['id'])) {
         if (intval($account['level']) < 6500) {
             fancyDie("You need a userlevel of 6500 to reply to this thread.");
         }
@@ -228,7 +227,7 @@ if ($_POST['pass']) {
 # tripcode hashing, 2ch-style and modified Wakaba-style
     if (preg_match("/\#/", $_POST['name'])) {
         $_POST['name'] = str_replace("&#", "&%%%%%%", $_POST['name']); # otherwise HTML numeric entities screw up explode()!
-        list ($name, $trip, $sectrip) = str_replace("&%%%%%%", "&#", explode("#", $_POST['name']));
+        @list ($name, $trip, $sectrip) = str_replace("&%%%%%%", "&#", explode("#", $_POST['name']));
         $_POST['name'] = $name;
 
         if ($trip != "") {
@@ -251,7 +250,7 @@ if ($_POST['pass']) {
     }
     if (isset($setting['adminsonly']) && $isnewthread) fancyDie("When I say 'for admins only' I mean 'for admins only'!"); // admins-only threads...
     if ($isnewthread && trim($_POST['subj']) == "") fancyDie("New threads must have a subject!"); // OP posts need a subject
-    if (!$isnewthread && !is_writable("{$_POST['bbs']}/dat/{$_POST['id']}.dat")) fancyDie("You're not allowed to reply to this thread.<br>If you're making a new thread, <b>try entering a subject for it</b> DQN."); // threadstops
+    if (!$isnewthread && isThreadLocked($_POST['bbs'], $_POST['id'])) fancyDie("You're not allowed to reply to this thread.<br>If you're making a new thread, <b>try entering a subject for it</b> DQN."); // threadstops
 } // End of non-capcodes-only section ####
 ##########################################
 
@@ -324,7 +323,7 @@ if (count(explode("<br>", $_POST['mesg'])) > 100) fancyDie("Your post has far to
 
 // check for ID and board
 if (!isset($_POST['bbs'])) fancyDie("No board specified to post to!");
-if (!isset($_POST['id'])) fancyDie("No thread ID specified to post to!");
+if (!isset($_POST['id']) && !$isnewthread) fancyDie("No thread ID specified to post to!");
 if (!is_dir($_POST['bbs'])) fancyDie("Board specified does not exist.");
 if (!$isnewthread && !getThread($_POST['bbs'], $_POST['id'])) fancyDie("Thread ID specified does not exist.");
 
@@ -345,9 +344,9 @@ if ($_POST['name'] == "" && !$trip) $_POST['name'] = $setting['nameless'];
 // It's time to actually write the post.
 
 if ($isnewthread) { // If a new post
-    addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
+    addPostToDatabase($_POST['bbs'], 0, $_POST['name'], $trip, $_POST['subj'], $_POST['icon'], $thisverysecond, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
 } else {
-    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $posttime, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
+    addPostToDatabase($_POST['bbs'], $_POST['id'], $_POST['name'], $trip, null, null, $thisverysecond, $_POST['mesg'], $idcrypt, $_SERVER['REMOTE_ADDR']);
 }
 
 setFloodMarker($_SERVER['REMOTE_ADDR']);

@@ -10,6 +10,7 @@ v=eval("document."+a+".mesg"); v.value+=">>"+b+"\n"; v.focus() }</script>
 <h3><a href="<%THREADLINK%>"><%THREADNAME%></a></h3>
 <h4>Add Reply</h4>
 <%STARTFORM%>
+<%THREADSTOPPED%>
 <table class="addthread">
 <td class="number"><a>Add</a>Reply</td>
 <td class="textarea">

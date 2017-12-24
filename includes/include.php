@@ -89,7 +89,7 @@ function createBoardSchema($board) {
     $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `create_thread_%%BOARD%%` (`num` INT, `timestamp` INT) BEGIN INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, `timestamp`, `timestamp`, 0, 0, 0); END;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE PROCEDURE `update_thread_%%BOARD%%` (`tnum` INT, `p_timestamp` INT) BEGIN UPDATE `%%BOARD%%_threads` op SET op.time_last_modified = (COALESCE(GREATEST(op.time_last_modified, p_timestamp), op.time_op)), op.nreplies = (op.nreplies + 1) WHERE op.thread_num = tnum; END;'));
-    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `capcode` varchar(255) DEFAULT NULL, `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\', `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
+    $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%` (`num` int(10) UNSIGNED NOT NULL, `poster_ip` decimal(39,0) UNSIGNED NOT NULL DEFAULT \'0\', `thread_num` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `op` tinyint(1) NOT NULL DEFAULT \'0\', `timestamp` int(10) UNSIGNED NOT NULL, `icon` varchar(255) DEFAULT NULL, `name` varchar(100) DEFAULT NULL, `trip` varchar(25) DEFAULT NULL, `title` varchar(100) DEFAULT NULL, `comment` text, `poster_hash` varchar(8) DEFAULT NULL) DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'CREATE TABLE `%%BOARD%%_threads` (`thread_num` int(10) UNSIGNED NOT NULL, `time_op` int(10) UNSIGNED NOT NULL, `time_last_modified` int(10) UNSIGNED NOT NULL, `nreplies` int(10) UNSIGNED NOT NULL DEFAULT \'0\', `sticky` tinyint(1) NOT NULL DEFAULT \'0\', `locked` tinyint(1) NOT NULL DEFAULT \'0\') DEFAULT CHARSET=utf8mb4;'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` ADD PRIMARY KEY (`num`), ADD KEY `thread_num_index` (`thread_num`,`num`), ADD KEY `op_index` (`op`), ADD KEY `name_trip_index` (`name`,`trip`), ADD KEY `trip_index` (`trip`), ADD KEY `poster_ip_index` (`poster_ip`), ADD KEY `timestamp_index` (`timestamp`);'));
     $stmt = $jee_db->exec(str_replace('%%BOARD%%', $board, 'ALTER TABLE `%%BOARD%%` MODIFY `num` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;'));
@@ -98,18 +98,66 @@ function createBoardSchema($board) {
 }
 
 function addPostToDatabase($board, $thread_num, $name, $trip, $title, $icon, $posttime, $comment, $idcrypt, $ip) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+    require_once('includes/inet/src/Inet.php');
+    $ip = \Foolz\Inet\Inet::ptod($ip);
+    if($thread_num == 0) {
+        $op = 1;
+    } else {
+        $op = 0;
+    }
+    $stmt = $jee_db->prepare("INSERT INTO `{$board}` (`num`, `poster_ip`, `thread_num`, `op`, `timestamp`, `icon`, `name`, `trip`, `title`, `comment`, `poster_hash`) VALUES (NULL, :ip, :thread_num, :op, :posttime, :icon, :name, :trip, :title, :comment, :idcrypt);");
+    $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->bindValue(':op', $op, PDO::PARAM_INT);
+    $stmt->bindValue(':posttime', $posttime, PDO::PARAM_INT);
+    $stmt->bindValue(':icon', $icon, PDO::PARAM_STR);
+    $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+    $stmt->bindValue(':trip', $trip, PDO::PARAM_STR);
+    $stmt->bindValue(':title', $title, PDO::PARAM_STR);
+    $stmt->bindValue(':comment', $comment, PDO::PARAM_STR);
+    $stmt->bindValue(':idcrypt', $idcrypt, PDO::PARAM_STR);
+    print_r($stmt);
 
+    $stmt->execute();
 }
 
 function getThread($board, $thread_num) {
     
 }
 
+function getThreadName($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+    $stmt = $jee_db->prepare("SELECT `title` as threadname FROM `{$board}` WHERE `num`=:num AND `op`=1 LIMIT 1;");
+    $stmt->bindValue(':num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    foreach($rows as $row) {
+        return $row[0];
+    }
+    return false;
+}
+
+function isThreadLocked($board, $thread_num) {
+    global $jee_db;
+    $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
+    $stmt = $jee_db->prepare("SELECT `locked` as threadname FROM `{$board}_threads` WHERE `thread_num`=:thread_num LIMIT 1;");
+    $stmt->bindValue(':thread_num', $thread_num, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    foreach($rows as $row) {
+        return $row[0];
+    }
+    return false;
+}
+
 function getSubjectTxt($board) {
     global $jee_db;
     $board = preg_replace('/[^A-Za-z0-9_]+/', '', $board);
 
-    $stmt = $jee_db->prepare("SELECT `mg`.`title` as threadname, `mg`.`name` as author, `mg`.`capcode` as threadicon, `rt`.`thread_num` as id, `rt`.`nreplies` as replies, `rt`.`time_last_modified` as lasttime, `mg`.`trip` as trip FROM `{$board}_threads` rt LEFT JOIN `{$board}` mg ON mg.num = rt.thread_num ORDER BY rt.sticky DESC, rt.time_last_modified DESC");
+    $stmt = $jee_db->prepare("SELECT `mg`.`title` as threadname, `mg`.`name` as author, `mg`.`icon` as threadicon, `rt`.`thread_num` as id, `rt`.`nreplies` as replies, `rt`.`time_last_modified` as lasttime, `mg`.`trip` as trip FROM `{$board}_threads` rt LEFT JOIN `{$board}` mg ON mg.num = rt.thread_num ORDER BY rt.sticky DESC, rt.time_last_modified DESC");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_NUM);
 }
@@ -618,7 +666,7 @@ function PrintThread($boardname, $threadid, $postarray, $isitreadphp) { //TODO
     }
     else $bottom = file_get_contents("includes/skin/".$setting['skin']."/smallthreadbottom.txt");
     $bottom = str_replace("<%NUMPOSTS%>", $numposts + 1, $bottom);
-    if (!is_writable("$boardname/dat/$threadid.dat")) $bottom = str_replace("<%TEXTAREA%>", "This thread is threadstopped. You can't reply anymore.", $bottom);
+    if (isThreadLocked($boardname, $threadid)) $bottom = str_replace("<%TEXTAREA%>", "This thread is threadstopped. You can't reply anymore.", $bottom);
     else
     if ($setting['namefield']) $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> Name <input name='name'> &nbsp;&nbsp;&nbsp; <input name='sage' type='checkbox'> Sage<br /><a href='" . linkToThread($boardname, $threadid, "1-{.".$setting['postsperpage']."}") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l{".$setting['postsperpage']."}") . "'>Last ".$setting['postsperpage']."</a> - <a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a>", $bottom);
     else $bottom = str_replace("<%TEXTAREA%>", "<textarea rows='5' cols='64' name='mesg'></textarea><br /><input type='submit' value='Add Reply'> &nbsp; <input name='sage' type='checkbox'> Sage<br /><br /><a href='" . linkToThread($boardname, $threadid) . "'>Entire Thread</a> - <a href='" . linkToThread($boardname, $threadid, "1-{".$setting['postsperpage']."}") . "'>First Page</a> - <a href='" . linkToThread($boardname, $threadid, "l{".$setting['postsperpage']."}") . "'>Last ".$setting['postsperpage']."</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <small><a href='<%REPLYLINK%>' title='Advanced reply'>Advanced Reply</a></small>", $bottom);

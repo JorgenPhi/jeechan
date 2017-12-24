@@ -492,7 +492,7 @@ if(isset($_POST['action'])) {
                 fancyDie("not a board");
             }
 
-            deleteBoardSchema($_POST['boardname']);
+            deleteBoardSchema($_POST['bbs']);
             deleteBoardSettings($_POST['bbs']);
             delete_files("./{$_POST['bbs']}/");
             printSuccess("The board {$_POST['bbs']} was successfully deleted.");
@@ -1206,7 +1206,7 @@ switch (@$_GET['task']) {
     </table>
     <?php exit;
     case "cleanup":
-        if (!isset($_GET['bbs']) || !getBoardSettings($_POST['bbs'])) fancyDie("no bbs?");
+        if (!isset($_GET['bbs']) || !getBoardSettings($_GET['bbs'])) fancyDie("no bbs?");
         if ($mylevel < 8000) fancyDie("Fnord! You don't have clearance for that.");
         ?>
         <link rel="stylesheet" href="admin.css"><h1>Cleanup</h1>

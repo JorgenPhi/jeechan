@@ -9,6 +9,7 @@ v=eval("document."+a+".mesg"); v.value+=">>"+b+"\n"; v.focus() }</script>
 <b><a href="<%FORUMURL%><%BOARDURL%>"><%BOARDNAME%></a> &gt; <a href="<%THREADLINK%>"><%THREADNAME%></a> &gt; Add Reply</b><br><br>
 <table>
 <%STARTFORM%>
+<%THREADSTOPPED%>
 <tr><th>Name</th><th align="left"><input name="name" size="20" <%NAMECOOKIE%>></th>
 <th class="add">Password <span>(admins only)</span></th><th>
 <input type="password" name="pass" size="20"></th></tr>

@@ -107,7 +107,7 @@ if (isset($_GET['id'])) {
     $html = str_replace("<%FORUMURL%>", $setting['urltoforum'], $html);
     $html = str_replace("<%BOARDNAME%>", $setting['boardname'], $html);
     $html = str_replace("<%STARTFORM%>", "<form name='post' action='post.php' method='POST'><input type='hidden' name='bbs' value='{$_GET['bbs']}'><input type='hidden' name='id' value='{$_GET['id']}'><input type='hidden' name='shiichan' value='proper'>", $html);
-    $html = str_replace("<%TEXTAREA%>", "<textarea rows='15' cols='75' name='mesg'></textarea><br><input type='submit' value='Add Reply'> <input name='sage' type='checkbox'> Sage?", $html);
+    $html = str_replace("<%TEXTAREA%>", "<textarea rows='15' cols='75' name='mesg'></textarea><br><input type='submit' value='Add Reply'>", $html); #<input name='sage' type='checkbox'> Sage?", $html); // I totally destroyed sage for the time being
     echo $html;
     exit;
 } else if (isset($_GET['bbs'])) {
@@ -149,27 +149,6 @@ if($lasttime != false && $lasttime + 5 > time()) {
 function htmlspecialquotes($st) {
     return str_replace("&amp;#", "&#", htmlspecialchars("$st", ENT_QUOTES));
 }
-
-/* link shorten
-
-function shorten($str){
-  if(strlen($str) > 50) {
-    $divide = round(strlen($str) / 3);
-    if ($divide*2 > 50) {
-      $divide = round(strlen($str) / 5);
-     $second_string = substr($str,$divide*4,200);
-    } else {
-        $second_string = substr($str,$divide*2,200);
-    }
-   $first_string = substr($str,0,$divide);
-   $short_string = $first_string . "..." . $second_string;
-   $short_string = htmlspecialchars($short_string, ENT_NOQUOTES);
-    } else {
- $short_string = $str;
- }
- return $short_string;
-}*/
-
 
 // for capcode functions
 $loggedin = false;

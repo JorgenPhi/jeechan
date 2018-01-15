@@ -3,6 +3,17 @@ jeechan
 
 jeechan is a text-only 2channel style message-board application, based off [Shiichan](http://wakaba.c3.cx/shii/shiichan) with support for a database backend and has been extensively modified to support new PHP versions. jeechan does not require users to register for an account. 
 
+Advantages
+------------
+
+* Easier to manage and extend with a modern storage backend
+* Support for ShiiChan on modern PHP versions
+
+Purpose
+------------
+
+* Ability to run shiichan without flat-files
+
 Installation guide
 ------------
 

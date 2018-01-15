@@ -17,10 +17,11 @@ Purpose
 Installation guide
 ------------
 
-1. Copy /includes/settings.default.php to /includes/settings.php
-2. Create a database and import /includes/install.sql into it
-3. Edit settings.php with the database connection credentials
-4. Browse to /admin.php
+1. Clone the repo & run `git submodule init && git submodule update`
+2. Copy /includes/settings.default.php to /includes/settings.php
+3. Create a database and import /includes/install.sql into it
+4. Edit settings.php with the database connection credentials
+5. Browse to /admin.php
     * The default username and password is admin / admin
     * You should create a new account and delete the admin account. 
 
